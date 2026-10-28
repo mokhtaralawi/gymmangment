@@ -45,6 +45,10 @@
           <span>💳</span>
           <span>الاشتراكات والباقات</span>
         </a>
+        <a href="{{ url_for('shifts.index') }}" class="nav-link {% if '/shifts' in request.path %}active{% endif %}">
+          <span>⏱️</span>
+          <span>فترات التمرين</span>
+        </a>
         <a href="{{ url_for('subscriptions.plans') }}" class="nav-link {% if '/subscriptions/plans' in request.path %}active{% endif %}">
           <span>📋</span>
           <span>أنواع الاشتراكات</span>

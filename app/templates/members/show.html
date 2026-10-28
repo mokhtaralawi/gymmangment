@@ -43,9 +43,14 @@
       <div style="display: flex; justify-content: space-between; align-items: flex-end; padding-top: 1rem; border-top: 1px solid #27272a; margin-top: 0.5rem; font-size: 0.8rem;">
         <div>
           <span style="display: block; font-size: 0.72rem; color: #71717a; font-weight: 700;">الاشتراك الحالي:</span>
-          <strong style="color: #fafafa; font-weight: 800;">
+          <strong style="color: #fafafa; font-weight: 800; display: block;">
             {% if member.active_subscription %}{{ member.active_subscription.plan.name }}{% else %}بدون اشتراك{% endif %}
           </strong>
+          {% if member.active_subscription and member.active_subscription.shift %}
+            <span style="font-size: 0.7rem; color: var(--primary); font-weight: 800; display: block; margin-top: 2px;">
+              ⏱️ {{ member.active_subscription.shift.name }} ({{ member.active_subscription.shift.formatted_time }})
+            </span>
+          {% endif %}
         </div>
         <div style="text-align: center;">
           <span style="display: block; font-size: 0.72rem; color: #71717a; font-weight: 700;">المتبقي:</span>
@@ -95,6 +100,7 @@
             <tr>
               <th>كود الاشتراك</th>
               <th>الباقة</th>
+              <th>فترة التمرين</th>
               <th>البدء</th>
               <th>الانتهاء</th>
               <th>المبلغ المدفوع</th>
@@ -107,6 +113,15 @@
             <tr>
               <td><code>{{ s.subscription_code }}</code></td>
               <td><strong>{{ s.plan.name }}</strong></td>
+              <td>
+                {% if s.shift %}
+                  <span class="badge badge-fire" title="المشرف: {{ s.shift.active_supervisor }}">
+                    ⏱️ {{ s.shift.name }}
+                  </span>
+                {% else %}
+                  <span style="color: var(--text-caption); font-size: 0.78rem;">غير محدد</span>
+                {% endif %}
+              </td>
               <td>{{ s.start_date }}</td>
               <td>{{ s.end_date }}</td>
               <td><strong>{{ "{:,.2f}".format(s.price_paid) }} ر.ي</strong></td>
@@ -188,6 +203,15 @@
           <select name="plan_id" class="form-control" required>
             {% for p in plans %}
             <option value="{{ p.id }}">{{ p.name }} ({{ p.duration_days }} يوم - {{ p.price }} ر.ي)</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">فترة التمرين اليومية (اختياري)</label>
+          <select name="shift_id" class="form-control">
+            <option value="">-- اختر فترة التمرين --</option>
+            {% for sh in shifts %}
+            <option value="{{ sh.id }}">{{ sh.name }} ({{ sh.formatted_time }}) - المشرف: {{ sh.active_supervisor }}</option>
             {% endfor %}
           </select>
         </div>

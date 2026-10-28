@@ -30,6 +30,7 @@
           <th>رقم الاشتراك</th>
           <th>اسم المشترك</th>
           <th>الباقة</th>
+          <th>فترة التمرين</th>
           <th>تاريخ البدء</th>
           <th>تاريخ النهاية</th>
           <th>المبلغ</th>
@@ -41,11 +42,20 @@
         {% for s in subscriptions %}
         <tr>
           <td><code>{{ s.subscription_code }}</code></td>
-          <td><strong><a href="{{ url_for('members.show', member_id=s.member_id) }}" style="color: #2563eb; text-decoration: none;">{{ s.member.full_name }}</a></strong></td>
+          <td><strong><a href="{{ url_for('members.show', member_id=s.member_id) }}" style="color: var(--primary); text-decoration: none;">{{ s.member.full_name }}</a></strong></td>
           <td>{{ s.plan.name }}</td>
+          <td>
+            {% if s.shift %}
+              <span class="badge badge-fire" title="المشرف: {{ s.shift.active_supervisor }}">
+                ⏱️ {{ s.shift.name }}
+              </span>
+            {% else %}
+              <span style="color: var(--text-caption); font-size: 0.78rem;">غير محدد</span>
+            {% endif %}
+          </td>
           <td>{{ s.start_date }}</td>
           <td>{{ s.end_date }}</td>
-          <td>{{ s.price_paid }} ر.ي</td>
+          <td><strong>{{ "{:,.2f}".format(s.price_paid) }} ر.ي</strong></td>
           <td>
             {% if s.is_active_now %}
               <span class="badge badge-success">ساري (متبقي {{ s.remaining_days }} يوم)</span>
@@ -101,6 +111,15 @@
             <option value="">-- اختر الباقة --</option>
             {% for p in plans %}
             <option value="{{ p.id }}">{{ p.name }} ({{ p.duration_days }} يوم - {{ p.price }} ر.ي)</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">فترة التمرين (اختياري)</label>
+          <select name="shift_id" class="form-control">
+            <option value="">-- حدد فترة التمرين اليومية --</option>
+            {% for sh in shifts %}
+            <option value="{{ sh.id }}">{{ sh.name }} ({{ sh.formatted_time }}) - المشرف: {{ sh.active_supervisor }}</option>
             {% endfor %}
           </select>
         </div>

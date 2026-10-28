@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime, date, timedelta
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from flask_login import login_required
-from app.models import db, Subscription, Plan, Member
+from app.models import db, Subscription, Plan, Member, Shift
 from app.utils import log_audit
 
 subscriptions_bp = Blueprint("subscriptions", __name__)
@@ -13,6 +13,7 @@ def index():
     if request.method == "POST":
         member_id = request.form.get("member_id")
         plan_id = request.form.get("plan_id")
+        shift_id = request.form.get("shift_id")
         start_date_str = request.form.get("start_date")
         notes = request.form.get("notes")
 
@@ -22,11 +23,13 @@ def index():
         start_date = datetime.strptime(start_date_str, "%Y-%m-%d").date() if start_date_str else date.today()
         end_date = start_date + timedelta(days=plan.duration_days)
         code = f"SUB-{uuid.uuid4().hex[:8].upper()}"
+        s_id = int(shift_id) if shift_id and shift_id.isdigit() else None
 
         sub = Subscription(
             subscription_code=code,
             member_id=member.id,
             plan_id=plan.id,
+            shift_id=s_id,
             start_date=start_date,
             end_date=end_date,
             price_paid=plan.price,
@@ -50,7 +53,8 @@ def index():
     subs = query.order_by(Subscription.id.desc()).all()
     members = Member.query.filter_by(status="نشط").all()
     plans = Plan.query.filter_by(is_active=True).all()
-    return render_template("subscriptions/index.html", subscriptions=subs, members=members, plans=plans, q=q, status_filter=status_filter)
+    shifts = Shift.query.filter_by(is_active=True).all()
+    return render_template("subscriptions/index.html", subscriptions=subs, members=members, plans=plans, shifts=shifts, q=q, status_filter=status_filter)
 
 @subscriptions_bp.route("/<int:sub_id>/cancel", methods=["POST"])
 @login_required

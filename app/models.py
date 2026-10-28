@@ -56,12 +56,49 @@ class Plan(db.Model):
     description = db.Column(db.Text, nullable=True)
     is_active = db.Column(db.Boolean, default=True)
 
+class Shift(db.Model):
+    __tablename__ = "shifts"
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    start_time = db.Column(db.String(10), nullable=False)  # HH:MM e.g. 06:00
+    end_time = db.Column(db.String(10), nullable=False)    # HH:MM e.g. 11:00
+    supervisor_name = db.Column(db.String(120), nullable=True)
+    employee_id = db.Column(db.Integer, db.ForeignKey("employees.id"), nullable=True)
+    notes = db.Column(db.Text, nullable=True)
+    is_active = db.Column(db.Boolean, default=True)
+
+    employee = db.relationship("Employee", backref="supervised_shifts")
+    subscriptions = db.relationship("Subscription", backref="shift", lazy=True)
+
+    @property
+    def formatted_time(self):
+        def to_12h(t_str):
+            if not t_str: return ""
+            try:
+                parts = t_str.split(":")
+                h = int(parts[0])
+                m = parts[1]
+                period = "ص" if h < 12 else "م"
+                h_12 = h % 12
+                if h_12 == 0: h_12 = 12
+                return f"{h_12}:{m} {period}"
+            except Exception:
+                return t_str
+        return f"{to_12h(self.start_time)} إلى {to_12h(self.end_time)}"
+
+    @property
+    def active_supervisor(self):
+        if self.employee:
+            return self.employee.full_name
+        return self.supervisor_name or "مسؤول الصالة"
+
 class Subscription(db.Model):
     __tablename__ = "subscriptions"
     id = db.Column(db.Integer, primary_key=True)
     subscription_code = db.Column(db.String(50), unique=True, nullable=False)
     member_id = db.Column(db.Integer, db.ForeignKey("members.id"), nullable=False)
     plan_id = db.Column(db.Integer, db.ForeignKey("plans.id"), nullable=False)
+    shift_id = db.Column(db.Integer, db.ForeignKey("shifts.id"), nullable=True)
     start_date = db.Column(db.Date, nullable=False, default=date.today)
     end_date = db.Column(db.Date, nullable=False)
     price_paid = db.Column(db.Float, default=0.0)

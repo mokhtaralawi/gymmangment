@@ -3,7 +3,8 @@ from flask import Flask, request
 from flask_login import LoginManager
 from flask_wtf.csrf import CSRFProtect
 from config import Config
-from app.models import db, User, Account, Plan, NotificationRule
+from app.models import db, User, Account, Plan, NotificationRule, Shift
+from sqlalchemy import inspect, text
 
 login_manager = LoginManager()
 csrf = CSRFProtect()
@@ -32,11 +33,13 @@ def create_app(config_class=Config):
     from app.routes.accounting import accounting_bp
     from app.routes.notifications import notifications_bp
     from app.routes.system import system_bp
+    from app.routes.shifts import shifts_bp
 
     app.register_blueprint(auth_bp, url_prefix="/auth")
     app.register_blueprint(dashboard_bp, url_prefix="/dashboard")
     app.register_blueprint(members_bp, url_prefix="/members")
     app.register_blueprint(subscriptions_bp, url_prefix="/subscriptions")
+    app.register_blueprint(shifts_bp, url_prefix="/shifts")
     app.register_blueprint(attendance_bp, url_prefix="/member-attendance")
     app.register_blueprint(employees_bp, url_prefix="/employees")
     app.register_blueprint(accounting_bp, url_prefix="/accounting")
@@ -76,7 +79,28 @@ def seed_initial_data():
         for code, name, days, price, desc in plans_data:
             db.session.add(Plan(plan_code=code, name=name, duration_days=days, price=price, description=desc, is_active=True))
 
-    # 3. Notification Rules
+    # Migration check for shift_id in subscriptions
+    try:
+        inspector = inspect(db.engine)
+        columns = [c['name'] for c in inspector.get_columns('subscriptions')]
+        if 'shift_id' not in columns:
+            with db.engine.connect() as conn:
+                conn.execute(text("ALTER TABLE subscriptions ADD COLUMN shift_id INTEGER REFERENCES shifts(id)"))
+                conn.commit()
+    except Exception as e:
+        print(f"Migration check notice: {e}")
+
+    # 3. Shifts (فترات التمرين)
+    if not Shift.query.first():
+        shifts_data = [
+            ("الفترة الصباحية", "06:00", "11:00", "كابتن الفترة الصباحية", "تمارين الصباح وحرق الدهون واللياقة البدنية"),
+            ("فترة بعد العصر", "16:00", "19:30", "كابتن فترة العصر", "تمارين الحديد والأوزان الحرة وبناء العضلات"),
+            ("فترة المساء", "20:00", "23:30", "كابتن الفترة المسائية", "تمارين كمال الأجسام المكثفة والأبطال"),
+        ]
+        for name, s_time, e_time, sup, notes in shifts_data:
+            db.session.add(Shift(name=name, start_time=s_time, end_time=e_time, supervisor_name=sup, notes=notes, is_active=True))
+
+    # 4. Notification Rules
     if not NotificationRule.query.first():
         db.session.add(NotificationRule(days_before=7, days_after=30, is_enabled=True))
 

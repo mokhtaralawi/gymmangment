@@ -1,0 +1,202 @@
+{% extends "base.html" %}
+
+{% block title %}فترات التمرين{% endblock %}
+{% block header_title %}النادي اليمني الصحي · فترات التمرين اليومية{% endblock %}
+
+{% block content %}
+<div class="card" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; border-right: 5px solid var(--primary);">
+  <div>
+    <h3 style="margin: 0 0 0.35rem 0; font-size: 1.25rem; font-weight: 900; color: var(--text-main);">
+      تنظيم أوقات وفترات التمارين
+    </h3>
+    <p style="margin: 0; font-size: 0.88rem; font-weight: 600; color: var(--text-muted);">
+      تحديد فترات الصالة (صباحية، بعد العصر، مسائية) وتعيين الكابتن المسؤول وربط اشتراكات اللاعبين بها.
+    </p>
+  </div>
+
+  <button type="button" class="btn btn-primary" onclick="openModal('addShiftModal')">
+    ➕ إضافة فترة تمرين جديدة
+  </button>
+</div>
+
+<!-- Shifts Cards Grid -->
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.5rem;">
+  {% for s in shifts %}
+  <div class="card" style="display: flex; flex-direction: column; justify-content: space-between; border-top: 5px solid {% if s.is_active %}var(--primary){% else %}var(--text-caption){% endif %}; margin-bottom: 0;">
+    <div>
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
+        <div>
+          <span style="font-size: 1.4rem;">
+            {% if 'صباح' in s.name %}🌅{% elif 'عصر' in s.name %}🌇{% else %}🌙{% endif %}
+          </span>
+          <h3 style="margin: 0.25rem 0 0 0; font-size: 1.35rem; font-weight: 900; color: var(--text-main);">{{ s.name }}</h3>
+        </div>
+        <div>
+          {% if s.is_active %}
+            <span class="badge badge-success">فترة مفعّلة</span>
+          {% else %}
+            <span class="badge badge-danger">معطلة</span>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Time Badge -->
+      <div style="background: var(--badge-fire-bg); border: 1.5px solid var(--badge-fire-border); border-radius: 12px; padding: 0.85rem 1rem; margin: 1rem 0; display: flex; align-items: center; justify-content: space-between;">
+        <span style="font-size: 0.85rem; font-weight: 800; color: var(--primary);">⏱️ توقيت التمارين:</span>
+        <strong style="font-size: 1.05rem; font-weight: 900; color: var(--primary); direction: ltr;">
+          {{ s.formatted_time }}
+        </strong>
+      </div>
+
+      <!-- Supervisor & Stats -->
+      <div style="font-size: 0.9rem; line-height: 2; margin-bottom: 1rem;">
+        <div>
+          <strong style="color: var(--text-caption);">👤 المسؤول / الكابتن:</strong>
+          <span style="font-weight: 800; color: var(--text-main);">{{ s.active_supervisor }}</span>
+        </div>
+        <div>
+          <strong style="color: var(--text-caption);">👥 اللاعبون المشتركون:</strong>
+          <span class="badge badge-fire" style="font-size: 0.82rem;">{{ stats.get(s.id, 0) }} مشترك نشط</span>
+        </div>
+        {% if s.notes %}
+        <div style="margin-top: 0.5rem; font-size: 0.82rem; color: var(--text-muted); font-weight: 600;">
+          📝 {{ s.notes }}
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div style="padding-top: 1rem; border-top: 1.5px solid var(--card-border); display: flex; justify-content: flex-end; gap: 0.5rem;">
+      <button type="button" class="btn btn-secondary" style="font-size: 0.78rem; padding: 0.35rem 0.75rem;" onclick="openEditShiftModal('{{ s.id }}', '{{ s.name }}', '{{ s.start_time }}', '{{ s.end_time }}', '{{ s.supervisor_name or '' }}', '{{ s.employee_id or '' }}', '{{ s.notes or '' }}')">
+        ✏️ تعديل
+      </button>
+      <form method="POST" action="{{ url_for('shifts.toggle_active', shift_id=s.id) }}" style="display: inline;">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit" class="btn btn-secondary" style="font-size: 0.78rem; padding: 0.35rem 0.75rem;">
+          {% if s.is_active %}تعطيل الفترة{% else %}تفعيل الفترة{% endif %}
+        </button>
+      </form>
+    </div>
+  </div>
+  {% else %}
+  <div class="card" style="grid-column: 1 / -1; text-align: center; color: var(--text-caption); padding: 3rem; font-weight: 700;">
+    لا توجد فترات تمرين مضافة.
+  </div>
+  {% endfor %}
+</div>
+
+<!-- Modal Add Shift -->
+<div class="modal-overlay" id="addShiftModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <span>إضافة فترة تمرين جديدة</span>
+      <button type="button" onclick="closeModal('addShiftModal')" style="background: none; border: none; font-size: 1.3rem; cursor: pointer; color: var(--text-main);">✕</button>
+    </div>
+    <form method="POST" action="{{ url_for('shifts.index') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">اسم الفترة *</label>
+          <input type="text" name="name" class="form-control" required placeholder="مثال: الفترة الصباحية، فترة بعد العصر، فترة المساء">
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+          <div class="form-group">
+            <label class="form-label">وقت بدء الفترة *</label>
+            <input type="time" name="start_time" class="form-control" value="06:00" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">وقت انتهاء الفترة *</label>
+            <input type="time" name="end_time" class="form-control" value="11:00" required>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">اختيار كابتن / موظف مسؤول (اختياري)</label>
+          <select name="employee_id" class="form-control">
+            <option value="">-- أو كتابة اسم المسؤول يدوياً بالأسفل --</option>
+            {% for emp in employees %}
+            <option value="{{ emp.id }}">{{ emp.full_name }} ({{ emp.job_title }})</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">اسم المسؤول / الكابتن المشرف</label>
+          <input type="text" name="supervisor_name" class="form-control" placeholder="مثال: كابتن أحمد (مدرب حديد)">
+        </div>
+        <div class="form-group">
+          <label class="form-label">ملاحظات عن الفترة</label>
+          <textarea name="notes" class="form-control" rows="2" placeholder="مخصصة للرجال، تمارين كمال الأجسام، لياقة..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeModal('addShiftModal')">إلغاء</button>
+        <button type="submit" class="btn btn-primary">حفظ الفترة</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal Edit Shift -->
+<div class="modal-overlay" id="editShiftModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <span id="editShiftTitle">تعديل بيانات فترة التمرين</span>
+      <button type="button" onclick="closeModal('editShiftModal')" style="background: none; border: none; font-size: 1.3rem; cursor: pointer; color: var(--text-main);">✕</button>
+    </div>
+    <form id="editShiftForm" method="POST" action="">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">اسم الفترة *</label>
+          <input type="text" id="editName" name="name" class="form-control" required>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+          <div class="form-group">
+            <label class="form-label">وقت بدء الفترة *</label>
+            <input type="time" id="editStartTime" name="start_time" class="form-control" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">وقت انتهاء الفترة *</label>
+            <input type="time" id="editEndTime" name="end_time" class="form-control" required>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">الموظف / الكابتن</label>
+          <select id="editEmployeeId" name="employee_id" class="form-control">
+            <option value="">-- أو كتابة اسم المسؤول يدوياً بالأسفل --</option>
+            {% for emp in employees %}
+            <option value="{{ emp.id }}">{{ emp.full_name }} ({{ emp.job_title }})</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">اسم المسؤول المشرف</label>
+          <input type="text" id="editSupervisorName" name="supervisor_name" class="form-control">
+        </div>
+        <div class="form-group">
+          <label class="form-label">ملاحظات</label>
+          <textarea id="editNotes" name="notes" class="form-control" rows="2"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeModal('editShiftModal')">إلغاء</button>
+        <button type="submit" class="btn btn-primary">حفظ التعديلات</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  function openEditShiftModal(id, name, start, end, sup, empId, notes) {
+    document.getElementById('editShiftForm').action = '/shifts/' + id + '/edit';
+    document.getElementById('editShiftTitle').innerText = 'تعديل: ' + name;
+    document.getElementById('editName').value = name;
+    document.getElementById('editStartTime').value = start;
+    document.getElementById('editEndTime').value = end;
+    document.getElementById('editSupervisorName').value = sup;
+    document.getElementById('editEmployeeId').value = empId;
+    document.getElementById('editNotes').value = notes;
+    openModal('editShiftModal');
+  }
+</script>
+{% endblock %}
