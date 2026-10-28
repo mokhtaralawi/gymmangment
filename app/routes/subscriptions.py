@@ -99,8 +99,8 @@ def index():
 
         db.session.commit()
         log_audit("subscriptions.create", target_type="subscription", target_id=sub.id, details=f"اشتراك جديد {code} للمشترك {member.full_name}")
-        flash(f"تم إنشاء الاشتراك بنجاح ({plan.name} - {member.full_name}).", "success")
-        return redirect(url_for("subscriptions.index"))
+        flash(f"تم إنشاء وتفعيل الاشتراك بنجاح ({plan.name} - {member.full_name}). جاري طباعة الفاتورة...", "success")
+        return redirect(url_for("members.receipt", member_id=member.id, sub_id=sub.id, auto_print=1))
 
     q = request.args.get("q", "").strip()
     status_filter = request.args.get("status", "")

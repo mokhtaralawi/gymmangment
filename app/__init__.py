@@ -35,6 +35,7 @@ def create_app(config_class=Config):
     from app.routes.system import system_bp
     from app.routes.shifts import shifts_bp
     from app.routes.payment_methods import payments_bp
+    from app.routes.reports import reports_bp
 
     app.register_blueprint(auth_bp, url_prefix="/auth")
     app.register_blueprint(dashboard_bp, url_prefix="/dashboard")
@@ -42,6 +43,7 @@ def create_app(config_class=Config):
     app.register_blueprint(subscriptions_bp, url_prefix="/subscriptions")
     app.register_blueprint(shifts_bp, url_prefix="/shifts")
     app.register_blueprint(payments_bp, url_prefix="/payments")
+    app.register_blueprint(reports_bp, url_prefix="/reports")
     app.register_blueprint(attendance_bp, url_prefix="/member-attendance")
     app.register_blueprint(employees_bp, url_prefix="/employees")
     app.register_blueprint(accounting_bp, url_prefix="/accounting")
@@ -52,6 +54,19 @@ def create_app(config_class=Config):
     def index():
         from flask import redirect, url_for
         return redirect(url_for("dashboard.index"))
+
+    @app.route("/offline")
+    def offline():
+        from flask import render_template
+        return render_template("offline.html")
+
+    @app.route("/sw.js")
+    def service_worker():
+        from flask import make_response, send_from_directory
+        response = make_response(send_from_directory(app.static_folder, "sw.js"))
+        response.headers["Content-Type"] = "application/javascript"
+        response.headers["Service-Worker-Allowed"] = "/"
+        return response
 
     with app.app_context():
         db.create_all()

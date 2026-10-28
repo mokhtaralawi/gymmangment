@@ -130,8 +130,8 @@ def index():
 
         db.session.commit()
         log_audit("members.create", target_type="member", target_id=member.id, details=f"إضافة مشترك: {full_name}")
-        flash(f"تم إضافة المشترك {full_name} بنجاح.", "success")
-        return redirect(url_for("members.show", member_id=member.id))
+        flash(f"تم إضافة المشترك {full_name} بنجاح. جاري طباعة الفاتورة الحرارية...", "success")
+        return redirect(url_for("members.receipt", member_id=member.id, auto_print=1))
 
     q = request.args.get("q", "").strip()
     query = Member.query
@@ -173,3 +173,20 @@ def edit(member_id):
     log_audit("members.edit", target_type="member", target_id=member.id, details=f"تعديل بيانات {member.full_name}")
     flash("تم حفظ التعديلات بنجاح.", "success")
     return redirect(url_for("members.show", member_id=member.id))
+
+@members_bp.route("/<int:member_id>/receipt")
+@login_required
+def receipt(member_id):
+    member = Member.query.get_or_404(member_id)
+    sub_id_str = request.args.get("sub_id")
+    auto_print = request.args.get("auto_print", "0") == "1"
+
+    sub = None
+    if sub_id_str and sub_id_str.isdigit():
+        sub = Subscription.query.filter_by(id=int(sub_id_str), member_id=member.id).first()
+
+    if not sub:
+        sub = member.active_subscription or Subscription.query.filter_by(member_id=member.id).order_by(Subscription.id.desc()).first()
+
+    now = datetime.now()
+    return render_template("members/receipt.html", member=member, sub=sub, now=now, auto_print=auto_print)

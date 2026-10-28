@@ -1,23 +1,44 @@
 {
-  "name": "النادي اليمني الصحي",
-  "short_name": "اليمني الصحي",
-  "description": "منظومة متكاملة لإدارة النادي اليمني الصحي والمشتركين والاشتراكات والحسابات والدوام - يمن كود لتصميم الأنظمة والبرمجيات الحديثة",
+  "name": "النادي اليمني الصحي - يمن كود",
+  "short_name": "النادي الصحي",
+  "description": "منظومة متكاملة لإدارة صالات كمال الأجسام واللياقة البدنية والمالية - يمن كود للبرمجيات",
   "start_url": "/dashboard/",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#09090b",
   "theme_color": "#ea580c",
+  "orientation": "any",
   "dir": "rtl",
   "lang": "ar",
   "icons": [
     {
       "src": "/static/icons/icon-192.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     },
     {
       "src": "/static/icons/icon-512.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "تسجيل مشترك",
+      "url": "/members/",
+      "icons": [{ "src": "/static/icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "الموازنة اليومية",
+      "url": "/reports/daily-balance",
+      "icons": [{ "src": "/static/icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "الحضور السريع",
+      "url": "/member-attendance/",
+      "icons": [{ "src": "/static/icons/icon-192.png", "sizes": "192x192" }]
     }
   ]
 }

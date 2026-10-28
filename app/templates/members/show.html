@@ -6,6 +6,7 @@
 {% block content %}
 <div style="display: flex; gap: 0.75rem; margin-bottom: 1.5rem; flex-wrap: wrap;">
   <a href="{{ url_for('members.index') }}" class="btn btn-secondary">← العودة لقائمة المشتركين</a>
+  <a href="{{ url_for('members.receipt', member_id=member.id) }}" target="_blank" class="btn btn-primary" style="background: var(--primary); border-color: var(--primary);">🖨️ طباعة الفاتورة الحرارية (نسختين)</a>
   <button type="button" class="btn btn-primary" onclick="openModal('newSubModal')">➕ تفعيل اشتراك جديد</button>
   <button type="button" class="btn btn-secondary" onclick="openModal('editMemberModal')">✏️ تعديل الملف</button>
 </div>
@@ -180,6 +181,9 @@
                   💵 سداد المتبقي
                 </button>
                 {% endif %}
+                <a href="{{ url_for('members.receipt', member_id=member.id, sub_id=s.id) }}" target="_blank" class="btn btn-secondary" style="font-size: 0.72rem; padding: 0.2rem 0.5rem; margin-left: 0.25rem;" title="طباعة الفاتورة الحرارية">
+                  🖨️ فاتورة
+                </a>
                 {% if s.status == 'ساري' %}
                 <form method="POST" action="{{ url_for('subscriptions.cancel', sub_id=s.id) }}" style="display: inline;" onsubmit="return confirm('هل أنت متأكد من إلغاء الاشتراك؟');">
                   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">

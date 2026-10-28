@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>إيصال موازنة الصندوق اليومي - {{ target_date }}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Cairo', Tahoma, sans-serif;
+    }
+    body {
+      background: #f1f5f9;
+      color: #000;
+      font-size: 11px;
+      line-height: 1.4;
+      padding: 20px 10px;
+    }
+    .screen-toolbar {
+      max-width: 300px;
+      margin: 0 auto 12px auto;
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+    }
+    .btn {
+      padding: 8px 14px;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 700;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .btn-print { background: #ea580c; color: #fff; }
+    .btn-back { background: #0f172a; color: #fff; }
+
+    .receipt-container {
+      width: 300px;
+      max-width: 100%;
+      margin: 0 auto;
+      background: #fff;
+      padding: 12px 10px;
+      border: 1px solid #cbd5e1;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    }
+    .receipt-header {
+      text-align: center;
+      padding-bottom: 6px;
+      border-bottom: 2px dashed #000;
+      margin-bottom: 8px;
+    }
+    .club-title {
+      font-size: 15px;
+      font-weight: 900;
+      letter-spacing: 0.5px;
+    }
+    .meta-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 10px;
+      font-weight: 600;
+      margin: 2px 0;
+    }
+    .section-title {
+      font-size: 11px;
+      font-weight: 900;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      padding: 2px 5px;
+      margin: 6px 0 4px 0;
+      text-align: center;
+    }
+    .finance-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      margin: 3px 0;
+    }
+    .finance-row.total {
+      font-weight: 900;
+      font-size: 13px;
+      border-top: 1.5px solid #000;
+      border-bottom: 1.5px solid #000;
+      padding: 5px 0;
+      margin: 6px 0;
+    }
+    .signatures {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 15px;
+      padding-top: 4px;
+      font-size: 10px;
+      font-weight: 800;
+    }
+    .sig-line {
+      width: 45%;
+      text-align: center;
+      border-top: 1px dotted #000;
+      padding-top: 4px;
+      margin-top: 25px;
+    }
+    .receipt-footer {
+      text-align: center;
+      margin-top: 10px;
+      padding-top: 6px;
+      border-top: 1px dashed #000;
+      font-size: 9px;
+      font-weight: 800;
+    }
+    @media print {
+      body { background: #fff; padding: 0; margin: 0; }
+      .screen-toolbar { display: none !important; }
+      .receipt-container { width: 100% !important; max-width: 80mm !important; border: none !important; box-shadow: none !important; padding: 4mm 2mm !important; margin: 0 !important; }
+      @page { size: 80mm auto; margin: 2mm; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="screen-toolbar">
+    <button type="button" class="btn btn-print" onclick="window.print()">🖨️ طباعة الإيصال</button>
+    <a href="{{ url_for('reports.daily_balance', date=target_date) }}" class="btn btn-back">← العودة للموازنة</a>
+  </div>
+
+  <div class="receipt-container">
+    <div class="receipt-header">
+      <div class="club-title">🔥 النادي اليمني الصحي 🔥</div>
+      <div style="font-size: 11px; font-weight: 900; margin-top: 2px;">إيصال موازنة وإغلاق الصندوق اليومي</div>
+      <div style="font-size: 9.5px; color: #475569;">مطابقة الدخل والخرج النقدي والإلكتروني</div>
+    </div>
+
+    <div class="meta-row">
+      <span>تاريخ الموازنة: <strong>{{ target_date }}</strong></span>
+      <span>الوقت: {{ now.strftime('%I:%M %p') }}</span>
+    </div>
+    <div class="meta-row">
+      <span>المحصل / أمين الصندوق: <strong>{{ current_user.full_name }}</strong></span>
+    </div>
+
+    <!-- Summary Box -->
+    <div class="section-title">ملخص الدخل والخرج اليومي</div>
+    
+    <div class="finance-row">
+      <span>📥 إجمالي المقبوضات والدخل ({{ income_vouchers|length }} سند):</span>
+      <strong style="color: #16a34a;">+ {{ "{:,.2f}".format(total_income) }} ر.ي</strong>
+    </div>
+
+    <div class="finance-row">
+      <span>📤 إجمالي المدفوعات والخرج ({{ expense_vouchers|length }} سند):</span>
+      <strong style="color: #dc2626;">- {{ "{:,.2f}".format(total_expenses) }} ر.ي</strong>
+    </div>
+
+    <div class="finance-row total">
+      <span>⚖️ صافي الفائض / الرصيد:</span>
+      <strong>{{ "{:,.2f}".format(net_balance) }} ر.ي</strong>
+    </div>
+
+    <!-- Operational metrics -->
+    <div class="section-title">حركة الاشتراكات اليومية</div>
+    <div class="finance-row">
+      <span>عدد الاشتراكات الجديدة:</span>
+      <strong>{{ subs_today|length }} اشتراك</strong>
+    </div>
+
+    <!-- Cash drawer count lines for manual verification -->
+    <div class="section-title">محضر الجرد والمطابقة</div>
+    <div class="finance-row" style="margin-top: 6px;">
+      <span>الجرد الفعلي للنقد في الصندوق:</span>
+      <span>................... ر.ي</span>
+    </div>
+    <div class="finance-row">
+      <span>الفارق (عجز / زيادة):</span>
+      <span>................... ر.ي</span>
+    </div>
+
+    <!-- Signatures -->
+    <div class="signatures">
+      <div class="sig-line">أمين الصندوق</div>
+      <div class="sig-line">المشرف / المدير</div>
+    </div>
+
+    <!-- Footer Rights -->
+    <div class="receipt-footer">
+      <div>النادي اليمني الصحي · موازنة الحسابات</div>
+      <div style="font-size: 8.5px; color: #475569; margin-top: 2px;">
+        تصميم وبرمجة: <strong>يمن كود للبرمجيات</strong>
+      </div>
+    </div>
+  </div>
+
+  {% if auto_print %}
+  <script>
+    window.addEventListener('load', function() {
+      setTimeout(function() { window.print(); }, 400);
+    });
+  </script>
+  {% endif %}
+
+</body>
+</html>

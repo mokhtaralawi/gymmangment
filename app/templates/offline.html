@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>النادي اليمني الصحي - غير متصل</title>
+  <link rel="stylesheet" href="/static/css/theme-iron.css">
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
+  <style>
+    body {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      background: var(--body-bg);
+      color: var(--text-main);
+      font-family: 'Cairo', sans-serif;
+      text-align: center;
+      padding: 1rem;
+    }
+    .offline-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      padding: 2.5rem 2rem;
+      max-width: 440px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+    }
+  </style>
+</head>
+<body>
+  <div class="offline-card">
+    <div style="font-size: 3.5rem; margin-bottom: 1rem;">⚡📶</div>
+    <h2 style="font-size: 1.5rem; font-weight: 900; margin-bottom: 0.5rem; color: var(--primary);">
+      النادي اليمني الصحي
+    </h2>
+    <h3 style="font-size: 1.15rem; font-weight: 800; margin-bottom: 1rem;">
+      أنت تتصفح بدون اتصال حالياً (Offline)
+    </h3>
+    <p style="font-size: 0.9rem; color: var(--text-muted); line-height: 1.6; margin-bottom: 1.5rem;">
+      تم تحميل التطبيق مسبقاً عبر تقنية PWA، يمكنك إعادة الاتصال بالشبكة أو تجربة تحديث الصفحة.
+    </p>
+    <button onclick="window.location.reload()" class="btn btn-primary" style="padding: 0.65rem 1.5rem; font-size: 0.95rem; font-weight: 800; cursor: pointer; border-radius: 8px;">
+      🔄 إعادة المحاولة
+    </button>
+  </div>
+</body>
+</html>

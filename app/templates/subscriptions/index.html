@@ -98,6 +98,9 @@
               💵 سداد
             </button>
             {% endif %}
+            <a href="{{ url_for('members.receipt', member_id=s.member_id, sub_id=s.id) }}" target="_blank" class="btn btn-secondary" style="font-size: 0.72rem; padding: 0.2rem 0.5rem; margin-left: 0.25rem;" title="طباعة الفاتورة الحرارية">
+              🖨️ فاتورة
+            </a>
             {% if s.status == 'ساري' %}
             <form method="POST" action="{{ url_for('subscriptions.cancel', sub_id=s.id) }}" style="display: inline;" onsubmit="return confirm('هل تريد بالتأكيد إلغاء هذا الاشتراك؟');">
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">

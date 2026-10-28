@@ -4,6 +4,10 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#ea580c">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="النادي الصحي">
+  <link rel="apple-touch-icon" href="{{ url_for('static', filename='icons/icon-192.png') }}">
   <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
   <title>{% block title %}النادي اليمني الصحي{% endblock %} · نظام إدارة النادي والأنشطة الرياضية</title>
   
@@ -94,6 +98,16 @@
           <span>دفتر الأستاذ (كشف حساب)</span>
         </a>
 
+        <div class="nav-group-title">التقارير والموازنات</div>
+        <a href="{{ url_for('reports.daily_balance') }}" class="nav-link {% if '/reports/daily-balance' in request.path %}active{% endif %}">
+          <span>⚖️</span>
+          <span>الموازنة اليومية (الدخل والخرج)</span>
+        </a>
+        <a href="{{ url_for('reports.index') }}" class="nav-link {% if request.path == '/reports/' %}active{% endif %}">
+          <span>📊</span>
+          <span>التقارير التحليلية والمالية</span>
+        </a>
+
         <div class="nav-group-title">إدارة النظام</div>
         <a href="{{ url_for('notifications.index') }}" class="nav-link {% if request.path == '/notifications/' %}active{% endif %}">
           <span>🔔</span>
@@ -154,6 +168,11 @@
         </div>
         
         <div style="display: flex; align-items: center; gap: 0.75rem;">
+          <!-- PWA Install Button -->
+          <button type="button" id="pwaInstallBtn" class="btn btn-secondary" style="display: none; font-size: 0.8rem; padding: 0.35rem 0.75rem; border-color: var(--primary); color: var(--primary); font-weight: 800;">
+            📲 تثبيت التطبيق
+          </button>
+
           <!-- Dark / Light Mode Switcher -->
           <button type="button" class="theme-switch-btn" id="themeToggleBtn" onclick="toggleTheme()" title="التبديل بين الوضع الليلي والنهاري">
             <span id="themeBtnIcon">🌙</span>
@@ -228,6 +247,35 @@
       const m = document.getElementById(id);
       if (m) m.classList.remove('active');
     }
+
+    // PWA Service Worker Registration
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function() {
+        navigator.serviceWorker.register('/sw.js').then(function(reg) {
+          console.log('PWA ServiceWorker registered successfully with scope:', reg.scope);
+        }).catch(function(err) {
+          console.log('PWA ServiceWorker registration error:', err);
+        });
+      });
+    }
+
+    // PWA Install Prompt Handler
+    let deferredPrompt;
+    window.addEventListener('beforeinstallprompt', function(e) {
+      e.preventDefault();
+      deferredPrompt = e;
+      const installBtn = document.getElementById('pwaInstallBtn');
+      if (installBtn) {
+        installBtn.style.display = 'inline-flex';
+        installBtn.onclick = function() {
+          installBtn.style.display = 'none';
+          deferredPrompt.prompt();
+          deferredPrompt.userChoice.then(function(result) {
+            deferredPrompt = null;
+          });
+        };
+      }
+    });
   </script>
   {% block extra_scripts %}{% endblock %}
 </body>

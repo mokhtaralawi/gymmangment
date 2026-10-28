@@ -1,0 +1,302 @@
+{% extends "base.html" %}
+
+{% block title %}التقارير التحليلية والمالية{% endblock %}
+{% block header_title %}النادي اليمني الصحي · التقارير الدورية (يومية · أسبوعية · شهرية){% endblock %}
+
+{% block content %}
+<!-- Quick Periods Filter Bar -->
+<div class="card" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; border-right: 5px solid var(--primary);">
+  <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center;">
+    <a href="{{ url_for('reports.index', period='today') }}" class="btn {% if period == 'today' %}btn-primary{% else %}btn-secondary{% endif %}">
+      📅 تقرير اليوم
+    </a>
+    <a href="{{ url_for('reports.index', period='weekly') }}" class="btn {% if period == 'weekly' %}btn-primary{% else %}btn-secondary{% endif %}">
+      📊 تقرير آخر 7 أيام
+    </a>
+    <a href="{{ url_for('reports.index', period='monthly') }}" class="btn {% if period == 'monthly' %}btn-primary{% else %}btn-secondary{% endif %}">
+      📈 تقرير هذا الشهر
+    </a>
+
+    <!-- Custom Range Form -->
+    <form method="GET" action="{{ url_for('reports.index') }}" style="display: inline-flex; align-items: center; gap: 0.4rem; margin-right: 0.5rem;">
+      <input type="hidden" name="period" value="custom">
+      <input type="date" name="start_date" value="{{ start_date }}" class="form-control" style="padding: 0.35rem 0.5rem; font-size: 0.8rem; width: auto;" title="من تاريخ">
+      <span style="font-weight: 700; color: var(--text-muted);">إلى</span>
+      <input type="date" name="end_date" value="{{ end_date }}" class="form-control" style="padding: 0.35rem 0.5rem; font-size: 0.8rem; width: auto;" title="إلى تاريخ">
+      <button type="submit" class="btn btn-secondary" style="padding: 0.35rem 0.75rem; font-size: 0.8rem;">تصفية</button>
+    </form>
+  </div>
+
+  <div style="display: flex; gap: 0.5rem;">
+    <a href="{{ url_for('reports.daily_balance') }}" class="btn btn-secondary" style="border-color: var(--primary); color: var(--primary); font-weight: 800;">
+      ⚖️ الموازنة اليومية (الدخل والخرج)
+    </a>
+    <button type="button" class="btn btn-secondary" onclick="window.print()" style="font-weight: 800;">
+      🖨️ طباعة التقرير
+    </button>
+  </div>
+</div>
+
+<!-- Period Label -->
+<div style="margin-bottom: 1.25rem; font-size: 0.95rem; font-weight: 800; color: var(--text-muted); display: flex; align-items: center; gap: 0.5rem;">
+  <span>📅 الفترة المحددة:</span>
+  <strong style="color: var(--text-main);">من {{ start_date }} إلى {{ end_date }}</strong>
+  {% if period == 'today' %}<span class="badge badge-fire">تقرير اليوم اللحظي</span>
+  {% elif period == 'weekly' %}<span class="badge badge-success">تقرير أسبوعي</span>
+  {% elif period == 'monthly' %}<span class="badge badge-fire">تقرير شهري</span>{% endif %}
+</div>
+
+<!-- Primary Financial KPIs Grid -->
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 1.25rem; margin-bottom: 1.5rem;">
+  <!-- Total Inflow -->
+  <div class="card" style="margin-bottom: 0; border-top: 4px solid #16a34a; background: var(--card-bg);">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+      <span style="font-size: 0.85rem; font-weight: 800; color: var(--text-muted);">إجمالي الدخل / المقبوضات</span>
+      <span style="font-size: 1.3rem;">💵</span>
+    </div>
+    <div style="font-size: 1.6rem; font-weight: 900; color: #16a34a; margin: 0.5rem 0;">
+      {{ "{:,.2f}".format(total_income) }} <span style="font-size: 0.85rem;">ر.ي</span>
+    </div>
+    <div style="font-size: 0.78rem; color: var(--text-muted); font-weight: 700;">
+      تشمل اشتراكات النادي وسندات القبض
+    </div>
+  </div>
+
+  <!-- Total Outflow -->
+  <div class="card" style="margin-bottom: 0; border-top: 4px solid #dc2626; background: var(--card-bg);">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+      <span style="font-size: 0.85rem; font-weight: 800; color: var(--text-muted);">إجمالي الخرج / المصروفات</span>
+      <span style="font-size: 1.3rem;">🧾</span>
+    </div>
+    <div style="font-size: 1.6rem; font-weight: 900; color: #dc2626; margin: 0.5rem 0;">
+      {{ "{:,.2f}".format(total_expenses) }} <span style="font-size: 0.85rem;">ر.ي</span>
+    </div>
+    <div style="font-size: 0.78rem; color: var(--text-muted); font-weight: 700;">
+      تشمل رواتب، إيجار، صيانة، وتشغيل
+    </div>
+  </div>
+
+  <!-- Net Profit -->
+  <div class="card" style="margin-bottom: 0; border-top: 4px solid {% if net_profit >= 0 %}var(--primary){% else %}#dc2626{% endif %}; background: var(--card-bg);">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+      <span style="font-size: 0.85rem; font-weight: 800; color: var(--text-muted);">صافي الرصيد / الفائض</span>
+      <span style="font-size: 1.3rem;">⚖️</span>
+    </div>
+    <div style="font-size: 1.6rem; font-weight: 900; color: {% if net_profit >= 0 %}var(--primary){% else %}#dc2626{% endif %}; margin: 0.5rem 0;">
+      {{ "{:,.2f}".format(net_profit) }} <span style="font-size: 0.85rem;">ر.ي</span>
+    </div>
+    <div style="font-size: 0.78rem; color: var(--text-muted); font-weight: 700;">
+      الصافي = الدخل - المصروفات
+    </div>
+  </div>
+
+  <!-- Registered Debts -->
+  <div class="card" style="margin-bottom: 0; border-top: 4px solid #f59e0b; background: var(--card-bg);">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+      <span style="font-size: 0.85rem; font-weight: 800; color: var(--text-muted);">الديون والمتبقيات المسجلة</span>
+      <span style="font-size: 1.3rem;">⚠️</span>
+    </div>
+    <div style="font-size: 1.6rem; font-weight: 900; color: #f59e0b; margin: 0.5rem 0;">
+      {{ "{:,.2f}".format(sub_remaining_debts) }} <span style="font-size: 0.85rem;">ر.ي</span>
+    </div>
+    <div style="font-size: 0.78rem; color: var(--text-muted); font-weight: 700;">
+      مبالغ باقات مستحقة في ذمة اللاعبين
+    </div>
+  </div>
+</div>
+
+<!-- Operational Metrics (Members, Subs, Attendances) -->
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.25rem; margin-bottom: 1.5rem;">
+  <div class="card" style="margin-bottom: 0; display: flex; align-items: center; gap: 1rem; padding: 1.15rem;">
+    <div style="font-size: 2.2rem; background: var(--badge-fire-bg); padding: 0.5rem; border-radius: 12px; border: 1px solid var(--badge-fire-border);">👥</div>
+    <div>
+      <span style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted); display: block;">مشتركون جدد مسجلون:</span>
+      <strong style="font-size: 1.4rem; font-weight: 900; color: var(--text-main);">{{ new_members_count }} مشترك</strong>
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom: 0; display: flex; align-items: center; gap: 1rem; padding: 1.15rem;">
+    <div style="font-size: 2.2rem; background: var(--badge-fire-bg); padding: 0.5rem; border-radius: 12px; border: 1px solid var(--badge-fire-border);">💳</div>
+    <div>
+      <span style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted); display: block;">اشتراكات مفعلة ومجددة:</span>
+      <strong style="font-size: 1.4rem; font-weight: 900; color: var(--text-main);">{{ subs_count }} اشتراك</strong>
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom: 0; display: flex; align-items: center; gap: 1rem; padding: 1.15rem;">
+    <div style="font-size: 2.2rem; background: var(--badge-fire-bg); padding: 0.5rem; border-radius: 12px; border: 1px solid var(--badge-fire-border);">🏋️‍♂️</div>
+    <div>
+      <span style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted); display: block;">إجمالي زيارات التمارين:</span>
+      <strong style="font-size: 1.4rem; font-weight: 900; color: var(--text-main);">{{ attendance_count }} زيارة</strong>
+    </div>
+  </div>
+</div>
+
+<!-- Detailed Analytics: Payment Methods & Subscriptions Breakdown -->
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
+  
+  <!-- Payment Methods Breakdown -->
+  <div class="card" style="margin-bottom: 0;">
+    <h3 style="margin: 0 0 1rem 0; font-size: 1.05rem; font-weight: 900; color: var(--text-main); display: flex; align-items: center; gap: 0.5rem;">
+      <span>💳</span> الإيرادات موزعة حسب طريقة الدفع
+    </h3>
+    <div class="table-responsive">
+      <table>
+        <thead>
+          <tr>
+            <th>طريقة الدفع</th>
+            <th>الاشتراكات</th>
+            <th>إجمالي المقبوض</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for pm in payment_breakdown %}
+          <tr>
+            <td>
+              <strong>{{ pm.method.name }}</strong>
+              {% if pm.method.code %}<code style="font-size: 0.75rem; margin-right: 4px;">{{ pm.method.code }}</code>{% endif %}
+            </td>
+            <td><span class="badge badge-fire">{{ pm.count }} اشتراك</span></td>
+            <td><strong style="color: #16a34a;">{{ "{:,.2f}".format(pm.total_collected) }} ر.ي</strong></td>
+          </tr>
+          {% else %}
+          <tr><td colspan="3" style="text-align: center; color: var(--text-caption); padding: 1.5rem;">لا توجد تحصيلات مسجلة خلال هذه الفترة.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Plans Breakdown -->
+  <div class="card" style="margin-bottom: 0;">
+    <h3 style="margin: 0 0 1rem 0; font-size: 1.05rem; font-weight: 900; color: var(--text-main); display: flex; align-items: center; gap: 0.5rem;">
+      <span>📋</span> الاشتراكات موزعة حسب الباقات
+    </h3>
+    <div class="table-responsive">
+      <table>
+        <thead>
+          <tr>
+            <th>الباقة</th>
+            <th>المدة</th>
+            <th>العدد</th>
+            <th>المبلغ المحصل</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for pb in plan_breakdown %}
+          <tr>
+            <td><strong>{{ pb.plan.name }}</strong></td>
+            <td>{{ pb.plan.duration_days }} يوم</td>
+            <td><span class="badge badge-fire">{{ pb.count }}</span></td>
+            <td><strong style="color: var(--text-main);">{{ "{:,.2f}".format(pb.total_revenue) }} ر.ي</strong></td>
+          </tr>
+          {% else %}
+          <tr><td colspan="4" style="text-align: center; color: var(--text-caption); padding: 1.5rem;">لا توجد اشتراكات خلال هذه الفترة.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Daily Shifts Distribution -->
+<div class="card">
+  <h3 style="margin: 0 0 1rem 0; font-size: 1.05rem; font-weight: 900; color: var(--text-main); display: flex; align-items: center; gap: 0.5rem;">
+    <span>⏱️</span> توزيع المشتركين على فترات التمرين اليومية
+  </h3>
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
+    {% for sb in shift_breakdown %}
+    <div style="background: var(--body-bg); border: 1.5px solid var(--badge-fire-border); border-radius: 12px; padding: 1rem;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+        <strong style="font-size: 1.05rem; color: var(--text-main);">{{ sb.shift.name }}</strong>
+        <span class="badge badge-fire">{{ sb.count }} مشترك</span>
+      </div>
+      <div style="font-size: 0.82rem; color: var(--text-muted); font-weight: 700;">
+        ⏱️ التوقيت: {{ sb.shift.formatted_time }}
+      </div>
+      <div style="font-size: 0.82rem; color: var(--text-muted); font-weight: 700; margin-top: 3px;">
+        👤 المشرف: {{ sb.shift.active_supervisor }}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- Financial Vouchers Tables (Inflow & Outflow Details) -->
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+  
+  <!-- Income Vouchers (سندات القبض) -->
+  <div class="card">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+      <h3 style="margin: 0; font-size: 1.05rem; font-weight: 900; color: #16a34a; display: flex; align-items: center; gap: 0.5rem;">
+        <span>📥</span> سندات القبض والدخل ({{ income_vouchers|length }})
+      </h3>
+      <strong style="color: #16a34a; font-size: 1.05rem;">{{ "{:,.2f}".format(total_income) }} ر.ي</strong>
+    </div>
+    <div class="table-responsive" style="max-height: 380px; overflow-y: auto;">
+      <table>
+        <thead>
+          <tr>
+            <th>رقم السند</th>
+            <th>التاريخ</th>
+            <th>البيان والمشترك</th>
+            <th>المبلغ</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for iv in income_vouchers %}
+          <tr>
+            <td><code>{{ iv.voucher_number }}</code></td>
+            <td style="font-size: 0.8rem;">{{ iv.voucher_date }}</td>
+            <td style="font-size: 0.82rem;">{{ iv.description or 'سند قبض' }}</td>
+            <td><strong style="color: #16a34a;">{{ "{:,.2f}".format(iv.amount) }}</strong></td>
+          </tr>
+          {% else %}
+          <tr><td colspan="4" style="text-align: center; color: var(--text-caption); padding: 1.5rem;">لا توجد سندات قبض.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Expense Vouchers (سندات الصرف) -->
+  <div class="card">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+      <h3 style="margin: 0; font-size: 1.05rem; font-weight: 900; color: #dc2626; display: flex; align-items: center; gap: 0.5rem;">
+        <span>📤</span> سندات الصرف والخرج ({{ expense_vouchers|length }})
+      </h3>
+      <strong style="color: #dc2626; font-size: 1.05rem;">{{ "{:,.2f}".format(total_expenses) }} ر.ي</strong>
+    </div>
+    <div class="table-responsive" style="max-height: 380px; overflow-y: auto;">
+      <table>
+        <thead>
+          <tr>
+            <th>رقم السند</th>
+            <th>التاريخ</th>
+            <th>البيان والحساب</th>
+            <th>المبلغ</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for ev in expense_vouchers %}
+          <tr>
+            <td><code>{{ ev.voucher_number }}</code></td>
+            <td style="font-size: 0.8rem;">{{ ev.voucher_date }}</td>
+            <td style="font-size: 0.82rem;">{{ ev.description or 'سند صرف' }}</td>
+            <td><strong style="color: #dc2626;">{{ "{:,.2f}".format(ev.amount) }}</strong></td>
+          </tr>
+          {% else %}
+          <tr><td colspan="4" style="text-align: center; color: var(--text-caption); padding: 1.5rem;">لا توجد سندات صرف.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<!-- Printable watermark footer -->
+<div style="text-align: center; margin-top: 1.5rem; font-size: 0.85rem; font-weight: 800; color: var(--text-muted);">
+  منظومة النادي اليمني الصحي · تصميم وتطوير: <strong>يمن كود لتصميم الأنظمة والبرمجيات الحديثة</strong>
+</div>
+{% endblock %}

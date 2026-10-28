@@ -1,0 +1,283 @@
+{% extends "base.html" %}
+
+{% block title %}الموازنة اليومية (الدخل والخرج){% endblock %}
+{% block header_title %}النادي اليمني الصحي · الموازنة ومطابقة الصندوق اليومي{% endblock %}
+
+{% block content %}
+<!-- Top Header & Date Selection -->
+<div class="card" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; border-right: 5px solid var(--primary);">
+  <div>
+    <h3 style="margin: 0 0 0.35rem 0; font-size: 1.25rem; font-weight: 900; color: var(--text-main);">
+      الموازنة اليومية لحساب الدخل والخرج
+    </h3>
+    <p style="margin: 0; font-size: 0.88rem; font-weight: 600; color: var(--text-muted);">
+      تسوية ومطابقة المقبوضات والمصروفات وحساب رصيد الصندوق والمحافظ ليوم: <strong style="color: var(--primary);">{{ target_date_str }}</strong>
+    </p>
+  </div>
+
+  <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center;">
+    <!-- Date Selector -->
+    <form method="GET" action="{{ url_for('reports.daily_balance') }}" style="display: inline-flex; align-items: center; gap: 0.4rem;">
+      <label style="font-size: 0.82rem; font-weight: 800; color: var(--text-muted);">تاريخ الموازنة:</label>
+      <input type="date" name="date" value="{{ target_date_str }}" class="form-control" style="padding: 0.35rem 0.65rem; font-size: 0.85rem;" onchange="this.form.submit()">
+    </form>
+
+    <a href="{{ url_for('reports.daily_balance_thermal', date=target_date_str) }}" target="_blank" class="btn btn-primary" style="background: var(--primary); border-color: var(--primary); font-weight: 800;">
+      🖨️ طباعة إيصال موازنة حراري (80mm)
+    </a>
+    <button type="button" class="btn btn-secondary" onclick="window.print()" style="font-weight: 800;">
+      📄 طباعة تقرير رسمي (A4)
+    </button>
+  </div>
+</div>
+
+<!-- Main Balance Summary Cards -->
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 1.25rem; margin-bottom: 1.5rem;">
+  
+  <!-- Total Daily Income -->
+  <div class="card" style="margin-bottom: 0; border-top: 5px solid #16a34a; background: var(--card-bg);">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+      <span style="font-size: 0.85rem; font-weight: 800; color: var(--text-muted);">إجمالي الدخل اليومي</span>
+      <span style="font-size: 1.4rem;">📥</span>
+    </div>
+    <div style="font-size: 1.75rem; font-weight: 900; color: #16a34a; margin: 0.5rem 0;">
+      {{ "{:,.2f}".format(total_income) }} <span style="font-size: 0.9rem;">ر.ي</span>
+    </div>
+    <div style="font-size: 0.8rem; color: var(--text-muted); font-weight: 700; display: flex; justify-content: space-between;">
+      <span>نقد الخزينة: <strong>{{ "{:,.0f}".format(cash_income) }}</strong></span>
+      <span>إلكتروني/بنوك: <strong>{{ "{:,.0f}".format(electronic_income) }}</strong></span>
+    </div>
+  </div>
+
+  <!-- Total Daily Outflow -->
+  <div class="card" style="margin-bottom: 0; border-top: 5px solid #dc2626; background: var(--card-bg);">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+      <span style="font-size: 0.85rem; font-weight: 800; color: var(--text-muted);">إجمالي الخرج والمصروفات</span>
+      <span style="font-size: 1.4rem;">📤</span>
+    </div>
+    <div style="font-size: 1.75rem; font-weight: 900; color: #dc2626; margin: 0.5rem 0;">
+      {{ "{:,.2f}".format(total_expenses) }} <span style="font-size: 0.9rem;">ر.ي</span>
+    </div>
+    <div style="font-size: 0.8rem; color: var(--text-muted); font-weight: 700;">
+      إجمالي ما تم صرفه خلال هذا اليوم
+    </div>
+  </div>
+
+  <!-- Net Daily Position -->
+  <div class="card" style="margin-bottom: 0; border-top: 5px solid {% if net_balance >= 0 %}var(--primary){% else %}#dc2626{% endif %}; background: var(--card-bg);">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+      <span style="font-size: 0.85rem; font-weight: 800; color: var(--text-muted);">صافي الرصيد اليومي</span>
+      <span style="font-size: 1.4rem;">⚖️</span>
+    </div>
+    <div style="font-size: 1.75rem; font-weight: 900; color: {% if net_balance >= 0 %}var(--primary){% else %}#dc2626{% endif %}; margin: 0.5rem 0;">
+      {{ "{:,.2f}".format(net_balance) }} <span style="font-size: 0.9rem;">ر.ي</span>
+    </div>
+    <div style="font-size: 0.8rem; font-weight: 800; color: {% if net_balance >= 0 %}#16a34a{% else %}#dc2626{% endif %};">
+      {% if net_balance >= 0 %}✅ فائض في الإيرادات اليومية{% else %}⚠️ عجز / المصروفات أعلى من الدخل{% endif %}
+    </div>
+  </div>
+
+  <!-- Subscriptions Debt Status -->
+  <div class="card" style="margin-bottom: 0; border-top: 5px solid #f59e0b; background: var(--card-bg);">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+      <span style="font-size: 0.85rem; font-weight: 800; color: var(--text-muted);">اشتراكات مسجلة اليوم</span>
+      <span style="font-size: 1.4rem;">📋</span>
+    </div>
+    <div style="font-size: 1.75rem; font-weight: 900; color: var(--text-main); margin: 0.5rem 0;">
+      {{ subs_today|length }} <span style="font-size: 0.9rem;">اشتراك</span>
+    </div>
+    <div style="font-size: 0.8rem; color: var(--text-muted); font-weight: 700;">
+      مقبوض: <strong style="color: #16a34a;">{{ "{:,.0f}".format(total_subs_paid) }}</strong> | ديون: <strong style="color: #dc2626;">{{ "{:,.0f}".format(total_subs_remaining) }}</strong>
+    </div>
+  </div>
+
+</div>
+
+<!-- Cash Drawer Reconciliation & Settlement Card (مطابقة الصندوق وإغلاق الوردية) -->
+<div class="card" style="border: 2px solid var(--badge-fire-border); background: var(--badge-fire-bg);">
+  <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem; margin-bottom: 1rem;">
+    <div>
+      <h3 style="margin: 0; font-size: 1.15rem; font-weight: 900; color: var(--primary); display: flex; align-items: center; gap: 0.5rem;">
+        <span>🧮</span> مطابقة وتسوية صندوق الخزينة النقدية (Cash Drawer Settlement)
+      </h3>
+      <span style="font-size: 0.82rem; font-weight: 700; color: var(--text-muted);">
+        مطابقة رصيد النقدية الفعلي في الدرج مع الرصيد الدفتري المسجل في النظام
+      </span>
+    </div>
+    <div id="reconciliation_status" class="badge badge-success" style="font-size: 0.9rem; padding: 0.4rem 0.85rem;">
+      جاهز للمطابقة
+    </div>
+  </div>
+
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; align-items: center;">
+    <div>
+      <label class="form-label" style="font-weight: 800;">الرصيد النقدي الدفتري المتوقع (الخزينة):</label>
+      <div style="font-size: 1.35rem; font-weight: 900; color: var(--text-main);" id="expected_cash_val" data-expected="{{ cash_net }}">
+        {{ "{:,.2f}".format(cash_net) }} ر.ي
+      </div>
+      <span style="font-size: 0.75rem; color: var(--text-muted);">(الدخل النقدي {{ "{:,.0f}".format(cash_income) }} - الخرج النقدي {{ "{:,.0f}".format(cash_expense) }})</span>
+    </div>
+
+    <div>
+      <label class="form-label" style="font-weight: 800;">الجرد الفعلي للنقد في الصندوق (ر.ي) *</label>
+      <input type="number" step="0.01" id="actual_cash_input" class="form-control" placeholder="أدخل المبلغ الموجود في الدرج" style="font-size: 1.1rem; font-weight: 900;" oninput="calculateReconciliation()">
+    </div>
+
+    <div>
+      <label class="form-label" style="font-weight: 800;">الفارق المالي (الفعلي - الدفتري):</label>
+      <div style="font-size: 1.35rem; font-weight: 900; color: var(--text-muted);" id="diff_display">
+        0.00 ر.ي
+      </div>
+      <span id="diff_desc" style="font-size: 0.75rem; font-weight: 800; color: var(--text-muted);">أدخل الجرد الفعلي للمطابقة</span>
+    </div>
+  </div>
+</div>
+
+<!-- Breakdown Tables: Inflow vs Outflow -->
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+  
+  <!-- Inflow (سندات القبض والدخل) -->
+  <div class="card">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 2px solid #16a34a;">
+      <h3 style="margin: 0; font-size: 1.1rem; font-weight: 900; color: #16a34a; display: flex; align-items: center; gap: 0.4rem;">
+        <span>📥</span> مقبوضات اليوم (الدخل) [{{ income_vouchers|length }}]
+      </h3>
+      <strong style="color: #16a34a; font-size: 1.15rem;">{{ "{:,.2f}".format(total_income) }} ر.ي</strong>
+    </div>
+
+    <div class="table-responsive">
+      <table>
+        <thead>
+          <tr>
+            <th>رقم السند</th>
+            <th>البيان والمشترك</th>
+            <th>طريقة الدفع</th>
+            <th>المبلغ</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for iv in income_vouchers %}
+          <tr>
+            <td><code>{{ iv.voucher_number }}</code></td>
+            <td style="font-size: 0.84rem;"><strong>{{ iv.description or 'سند قبض' }}</strong></td>
+            <td>
+              {% if iv.account and 'بنك' in iv.account.name %}
+                <span class="badge" style="background: #0284c7; color: #fff;">إلكتروني / بنكي</span>
+              {% else %}
+                <span class="badge badge-fire">نقد (خزينة)</span>
+              {% endif %}
+            </td>
+            <td><strong style="color: #16a34a; font-size: 0.95rem;">{{ "{:,.2f}".format(iv.amount) }}</strong></td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="4" style="text-align: center; color: var(--text-caption); padding: 2rem; font-weight: 700;">
+              لم يتم تحصيل أي مبالغ أو سندات قبض في هذا اليوم.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Outflow (سندات الصرف والخرج) -->
+  <div class="card">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 2px solid #dc2626;">
+      <h3 style="margin: 0; font-size: 1.1rem; font-weight: 900; color: #dc2626; display: flex; align-items: center; gap: 0.4rem;">
+        <span>📤</span> مدفوعات اليوم (الخرج) [{{ expense_vouchers|length }}]
+      </h3>
+      <strong style="color: #dc2626; font-size: 1.15rem;">{{ "{:,.2f}".format(total_expenses) }} ر.ي</strong>
+    </div>
+
+    <div class="table-responsive">
+      <table>
+        <thead>
+          <tr>
+            <th>رقم السند</th>
+            <th>البيان والحساب</th>
+            <th>حساب الصرف</th>
+            <th>المبلغ</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for ev in expense_vouchers %}
+          <tr>
+            <td><code>{{ ev.voucher_number }}</code></td>
+            <td style="font-size: 0.84rem;"><strong>{{ ev.description or 'سند صرف' }}</strong></td>
+            <td style="font-size: 0.8rem; color: var(--text-muted);">{{ ev.account.name if ev.account else 'الصندوق' }}</td>
+            <td><strong style="color: #dc2626; font-size: 0.95rem;">{{ "{:,.2f}".format(ev.amount) }}</strong></td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="4" style="text-align: center; color: var(--text-caption); padding: 2rem; font-weight: 700;">
+              لم يتم تسجيل أي مصروفات أو سندات صرف في هذا اليوم.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<!-- Signatures Section for A4 Print -->
+<div style="margin-top: 2rem; padding: 1.5rem; background: var(--card-bg); border: 1px dashed var(--card-border); border-radius: 12px; display: flex; justify-content: space-around; text-align: center;">
+  <div style="width: 200px;">
+    <div style="font-weight: 800; font-size: 0.9rem; margin-bottom: 2.5rem;">أمين الصندوق / المحصل:</div>
+    <div style="border-top: 1px solid var(--text-main); padding-top: 0.4rem; font-size: 0.85rem; font-weight: 700;">التوقيع: .....................</div>
+  </div>
+  <div style="width: 200px;">
+    <div style="font-weight: 800; font-size: 0.9rem; margin-bottom: 2.5rem;">المراجع المالي:</div>
+    <div style="border-top: 1px solid var(--text-main); padding-top: 0.4rem; font-size: 0.85rem; font-weight: 700;">التوقيع: .....................</div>
+  </div>
+  <div style="width: 200px;">
+    <div style="font-weight: 800; font-size: 0.9rem; margin-bottom: 2.5rem;">اعتماد المدير العام:</div>
+    <div style="border-top: 1px solid var(--text-main); padding-top: 0.4rem; font-size: 0.85rem; font-weight: 700;">الختم والتوقيع: .....................</div>
+  </div>
+</div>
+
+<script>
+function calculateReconciliation() {
+  const expected = parseFloat(document.getElementById('expected_cash_val').getAttribute('data-expected') || 0);
+  const inputEl = document.getElementById('actual_cash_input');
+  const actual = parseFloat(inputEl.value);
+  const statusBadge = document.getElementById('reconciliation_status');
+  const diffDisplay = document.getElementById('diff_display');
+  const diffDesc = document.getElementById('diff_desc');
+
+  if (isNaN(actual)) {
+    diffDisplay.textContent = '0.00 ر.ي';
+    diffDisplay.style.color = 'var(--text-muted)';
+    diffDesc.textContent = 'أدخل الجرد الفعلي للمطابقة';
+    statusBadge.textContent = 'بانتظار إدخال الجرد';
+    statusBadge.className = 'badge';
+    return;
+  }
+
+  const diff = actual - expected;
+  const absDiff = Math.abs(diff);
+
+  if (absDiff < 0.01) {
+    diffDisplay.textContent = '0.00 ر.ي';
+    diffDisplay.style.color = '#16a34a';
+    diffDesc.textContent = 'الرصيد الفعلي يطابق الرصيد الدفتري بنسبة 100%';
+    statusBadge.textContent = 'مطابق تماماً ✅';
+    statusBadge.className = 'badge badge-success';
+  } else if (diff < 0) {
+    diffDisplay.textContent = '- ' + absDiff.toLocaleString('en-US', {minimumFractionDigits: 2}) + ' ر.ي';
+    diffDisplay.style.color = '#dc2626';
+    diffDesc.textContent = 'يوجد عجز نقدي في الدرج بمقدار ' + absDiff.toLocaleString() + ' ر.ي';
+    statusBadge.textContent = 'عجز في الصندوق ❌';
+    statusBadge.className = 'badge badge-danger';
+  } else {
+    diffDisplay.textContent = '+ ' + absDiff.toLocaleString('en-US', {minimumFractionDigits: 2}) + ' ر.ي';
+    diffDisplay.style.color = '#f59e0b';
+    diffDesc.textContent = 'يوجد زيادة نقدية في الدرج بمقدار ' + absDiff.toLocaleString() + ' ر.ي';
+    statusBadge.textContent = 'زيادة في الصندوق ⚠️';
+    statusBadge.className = 'badge badge-warning';
+  }
+}
+</script>
+{% endblock %}
