@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
-{% block title %}ملف البطل: {{ member.full_name }}{% endblock %}
-{% block header_title %}ملف المشترك: {{ member.full_name }}{% endblock %}
+{% block title %}ملف المشترك: {{ member.full_name }}{% endblock %}
+{% block header_title %}النادي اليمني الصحي · ملف المشترك: {{ member.full_name }}{% endblock %}
 
 {% block content %}
 <div style="display: flex; gap: 0.75rem; margin-bottom: 1.5rem; flex-wrap: wrap;">
@@ -15,7 +15,7 @@
   
   <!-- Digital Member Pass & Profile Card -->
   <div class="space-y-4">
-    <!-- Premium Digital Pass for Bodybuilding Gym -->
+    <!-- Premium Digital Pass for Yemeni Health Club -->
     <div style="background: linear-gradient(135deg, #18181b, #09090b); color: #fff; border-radius: 20px; padding: 1.5rem; position: relative; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.25); border: 1.5px solid #27272a;">
       <div style="position: absolute; left: -20px; bottom: -20px; width: 120px; height: 120px; background: var(--primary); border-radius: 50%; opacity: 0.25; filter: blur(30px); pointer-events: none;"></div>
 
@@ -23,8 +23,8 @@
         <div style="display: flex; align-items: center; gap: 0.5rem;">
           <span style="font-size: 1.4rem;">🔥</span>
           <div>
-            <strong style="font-size: 1.05rem; font-weight: 900; letter-spacing: 0.5px; display: block;">IRON GYM PRO</strong>
-            <span style="font-size: 0.65rem; color: #a1a1aa; font-weight: 700;">بطاقة عضوية كمال الأجسام واللياقة</span>
+            <strong style="font-size: 1.05rem; font-weight: 900; letter-spacing: 0.5px; display: block;">النادي اليمني الصحي</strong>
+            <span style="font-size: 0.65rem; color: #a1a1aa; font-weight: 700;">بطاقة عضوية رياضية ذكية</span>
           </div>
         </div>
         <span class="badge" style="background: var(--primary); color: #fff; font-size: 0.72rem;">{{ member.status }}</span>
@@ -60,7 +60,7 @@
     </div>
 
     <!-- WhatsApp Share -->
-    <a href="https://wa.me/{{ member.phone|replace('+', '')|replace(' ', '') }}?text={{ ('مرحباً ' ~ member.full_name ~ '، تفضل بطاقة اشتراكك في نادي IRON Gym. كود العضوية: ' ~ member.member_code)|urlencode }}" target="_blank" class="btn btn-secondary w-100" style="width: 100%; justify-content: center; margin-top: 0.5rem; border-color: #22c55e; color: #16a34a;">
+    <a href="https://wa.me/{{ member.phone|replace('+', '')|replace(' ', '') }}?text={{ ('مرحباً ' ~ member.full_name ~ '، تفضل بطاقة عضويتك في النادي اليمني الصحي. كود العضوية: ' ~ member.member_code)|urlencode }}" target="_blank" class="btn btn-secondary w-100" style="width: 100%; justify-content: center; margin-top: 0.5rem; border-color: #22c55e; color: #16a34a;">
       <span>💬</span> مشاركة بيانات البطاقة عبر WhatsApp
     </a>
 

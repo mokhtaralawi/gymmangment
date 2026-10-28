@@ -1,11 +1,11 @@
 {
-  "name": "نظام إدارة النادي الرياضي",
-  "short_name": "نادي",
-  "description": "منظومة متكاملة لإدارة المشتركين والاشتراكات والحسابات والدوام",
+  "name": "النادي اليمني الصحي",
+  "short_name": "اليمني الصحي",
+  "description": "منظومة متكاملة لإدارة النادي اليمني الصحي والمشتركين والاشتراكات والحسابات والدوام - يمن كود لتصميم الأنظمة والبرمجيات الحديثة",
   "start_url": "/dashboard/",
   "display": "standalone",
-  "background_color": "#f8fafc",
-  "theme_color": "#2563eb",
+  "background_color": "#09090b",
+  "theme_color": "#ea580c",
   "dir": "rtl",
   "lang": "ar",
   "icons": [
