@@ -16,6 +16,7 @@ def index():
         gender = request.form.get("gender", "ذكر")
         birth_date_str = request.form.get("birth_date")
         initial_plan_id = request.form.get("initial_plan_id")
+        subscription_start_date_str = request.form.get("subscription_start_date")
         emergency_name = request.form.get("emergency_contact_name")
         emergency_phone = request.form.get("emergency_contact_phone")
         address = request.form.get("address")
@@ -43,7 +44,14 @@ def index():
         if initial_plan_id and initial_plan_id.isdigit():
             plan = Plan.query.get(int(initial_plan_id))
             if plan:
-                start_d = date.today()
+                if subscription_start_date_str and subscription_start_date_str.strip():
+                    try:
+                        start_d = datetime.strptime(subscription_start_date_str.strip(), "%Y-%m-%d").date()
+                    except ValueError:
+                        start_d = date.today()
+                else:
+                    start_d = date.today()
+
                 end_d = start_d + timedelta(days=plan.duration_days)
                 sub_code = f"SUB-{uuid.uuid4().hex[:8].upper()}"
                 sub = Subscription(
@@ -69,7 +77,8 @@ def index():
     members_list = query.order_by(Member.id.desc()).all()
     plans = Plan.query.filter_by(is_active=True).all()
 
-    return render_template("members/index.html", members=members_list, plans=plans, q=q)
+    today_str = date.today().strftime("%Y-%m-%d")
+    return render_template("members/index.html", members=members_list, plans=plans, q=q, today=today_str)
 
 @members_bp.route("/<int:member_id>")
 @login_required
