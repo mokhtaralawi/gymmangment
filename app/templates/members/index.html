@@ -26,6 +26,7 @@
           <th>رقم الهاتف</th>
           <th>الجنس</th>
           <th>الاشتراك الحالي</th>
+          <th>الرصيد / المتبقي</th>
           <th>تاريخ التسجيل</th>
           <th>الحالة</th>
           <th>إجراءات</th>
@@ -35,7 +36,7 @@
         {% for m in members %}
         <tr>
           <td><code>{{ m.member_code }}</code></td>
-          <td><strong><a href="{{ url_for('members.show', member_id=m.id) }}" style="color: #2563eb; text-decoration: none;">{{ m.full_name }}</a></strong></td>
+          <td><strong><a href="{{ url_for('members.show', member_id=m.id) }}" style="color: var(--primary); text-decoration: none;">{{ m.full_name }}</a></strong></td>
           <td>{{ m.phone }}</td>
           <td>{{ m.gender }}</td>
           <td>
@@ -43,6 +44,13 @@
               <span class="badge badge-success">{{ m.active_subscription.plan.name }} (متبقي {{ m.active_subscription.remaining_days }} يوم)</span>
             {% else %}
               <span class="badge badge-warning">بدون اشتراك نشط</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if m.total_debt and m.total_debt > 0 %}
+              <span class="badge badge-danger" style="font-weight: 800;">متبقي: {{ "{:,.2f}".format(m.total_debt) }} ر.ي</span>
+            {% else %}
+              <span class="badge badge-success">خالص</span>
             {% endif %}
           </td>
           <td>{{ m.created_at.strftime('%Y-%m-%d') }}</td>
@@ -96,15 +104,15 @@
         <!-- Subscription section in Add Member -->
         <div style="background: var(--body-bg); border: 1.5px dashed var(--badge-fire-border); border-radius: 12px; padding: 1rem; margin-bottom: 1.15rem;">
           <div style="font-weight: 800; font-size: 0.88rem; color: var(--primary); margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.4rem;">
-            <span>💳</span> بيانات الاشتراك الفوري (اختياري)
+            <span>💳</span> بيانات الاشتراك الفوري وطريقة الدفع (اختياري)
           </div>
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
             <div class="form-group" style="margin-bottom: 0;">
               <label class="form-label">نوع باقة الاشتراك</label>
-              <select name="initial_plan_id" class="form-control">
-                <option value="">-- بدون اشتراك فوري --</option>
+              <select name="initial_plan_id" id="member_plan_select" class="form-control" onchange="updateMemberPaymentCalc()">
+                <option value="" data-price="0">-- بدون اشتراك فوري --</option>
                 {% for p in plans %}
-                <option value="{{ p.id }}">{{ p.name }} ({{ p.duration_days }} يوم - {{ p.price }} ر.ي)</option>
+                <option value="{{ p.id }}" data-price="{{ p.price }}">{{ p.name }} ({{ p.duration_days }} يوم - {{ "{:,.0f}".format(p.price) }} ر.ي)</option>
                 {% endfor %}
               </select>
             </div>
@@ -118,6 +126,31 @@
               </select>
             </div>
           </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 0.85rem;">
+            <div class="form-group" style="margin-bottom: 0;">
+              <label class="form-label">طريقة / نوع الدفع</label>
+              <select name="payment_method_id" class="form-control">
+                {% for pm in payment_methods %}
+                <option value="{{ pm.id }}">{{ pm.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="form-group" style="margin-bottom: 0;">
+              <label class="form-label">المبلغ المدفوع حالياً (ر.ي)</label>
+              <input type="number" step="0.01" min="0" name="paid_amount" id="member_paid_amount" class="form-control" placeholder="اتركه فارغاً لدفع كامل المبلغ" oninput="updateMemberPaymentCalc()">
+            </div>
+          </div>
+
+          <!-- Dynamic Debt/Payment Status Preview -->
+          <div id="payment_calc_box" style="margin-top: 0.85rem; background: var(--badge-fire-bg); border: 1.5px solid var(--badge-fire-border); border-radius: 8px; padding: 0.65rem 0.85rem; font-size: 0.84rem; display: none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+              <span>سعر الباقة: <strong id="calc_total_price" style="color: var(--text-main);">0</strong> ر.ي</span>
+              <span>المدفوع: <strong id="calc_paid_price" style="color: #16a34a;">0</strong> ر.ي</span>
+              <span>المتبقي (يسجل ديناً): <strong id="calc_rem_price" style="color: #dc2626; font-size: 0.95rem;">0</strong> ر.ي</span>
+            </div>
+          </div>
+
           <div class="form-group" style="margin-top: 0.85rem; margin-bottom: 0;">
             <label class="form-label">تاريخ بداية الاشتراك</label>
             <input type="date" name="subscription_start_date" class="form-control" placeholder="YYYY-MM-DD">
@@ -152,4 +185,27 @@
     </form>
   </div>
 </div>
+
+<script>
+function updateMemberPaymentCalc() {
+  const select = document.getElementById('member_plan_select');
+  const paidInput = document.getElementById('member_paid_amount');
+  const box = document.getElementById('payment_calc_box');
+  const selectedOpt = select.options[select.selectedIndex];
+  const price = parseFloat(selectedOpt.getAttribute('data-price') || 0);
+
+  if (price > 0) {
+    box.style.display = 'block';
+    let paidVal = paidInput.value !== '' ? parseFloat(paidInput.value) : price;
+    if (isNaN(paidVal) || paidVal < 0) paidVal = 0;
+    const rem = Math.max(0, price - paidVal);
+
+    document.getElementById('calc_total_price').textContent = price.toLocaleString();
+    document.getElementById('calc_paid_price').textContent = paidVal.toLocaleString();
+    document.getElementById('calc_rem_price').textContent = rem.toLocaleString();
+  } else {
+    box.style.display = 'none';
+  }
+}
+</script>
 {% endblock %}

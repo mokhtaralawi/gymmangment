@@ -73,6 +73,10 @@
         </a>
 
         <div class="nav-group-title">المالية والحسابات</div>
+        <a href="{{ url_for('payments.methods') }}" class="nav-link {% if '/payments/methods' in request.path %}active{% endif %}">
+          <span>💳</span>
+          <span>أنواع وطرق الدفع</span>
+        </a>
         <a href="{{ url_for('accounting.vouchers') }}" class="nav-link {% if '/accounting/vouchers' in request.path %}active{% endif %}">
           <span>🧾</span>
           <span>سندات القبض والصرف</span>

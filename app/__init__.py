@@ -3,7 +3,7 @@ from flask import Flask, request
 from flask_login import LoginManager
 from flask_wtf.csrf import CSRFProtect
 from config import Config
-from app.models import db, User, Account, Plan, NotificationRule, Shift
+from app.models import db, User, Account, Plan, NotificationRule, Shift, PaymentMethod
 from sqlalchemy import inspect, text
 
 login_manager = LoginManager()
@@ -34,12 +34,14 @@ def create_app(config_class=Config):
     from app.routes.notifications import notifications_bp
     from app.routes.system import system_bp
     from app.routes.shifts import shifts_bp
+    from app.routes.payment_methods import payments_bp
 
     app.register_blueprint(auth_bp, url_prefix="/auth")
     app.register_blueprint(dashboard_bp, url_prefix="/dashboard")
     app.register_blueprint(members_bp, url_prefix="/members")
     app.register_blueprint(subscriptions_bp, url_prefix="/subscriptions")
     app.register_blueprint(shifts_bp, url_prefix="/shifts")
+    app.register_blueprint(payments_bp, url_prefix="/payments")
     app.register_blueprint(attendance_bp, url_prefix="/member-attendance")
     app.register_blueprint(employees_bp, url_prefix="/employees")
     app.register_blueprint(accounting_bp, url_prefix="/accounting")
@@ -79,14 +81,24 @@ def seed_initial_data():
         for code, name, days, price, desc in plans_data:
             db.session.add(Plan(plan_code=code, name=name, duration_days=days, price=price, description=desc, is_active=True))
 
-    # Migration check for shift_id in subscriptions
+    # Migration check for subscriptions columns
     try:
         inspector = inspect(db.engine)
         columns = [c['name'] for c in inspector.get_columns('subscriptions')]
-        if 'shift_id' not in columns:
-            with db.engine.connect() as conn:
+        with db.engine.connect() as conn:
+            if 'shift_id' not in columns:
                 conn.execute(text("ALTER TABLE subscriptions ADD COLUMN shift_id INTEGER REFERENCES shifts(id)"))
-                conn.commit()
+            if 'total_amount' not in columns:
+                conn.execute(text("ALTER TABLE subscriptions ADD COLUMN total_amount FLOAT DEFAULT 0.0"))
+            if 'paid_amount' not in columns:
+                conn.execute(text("ALTER TABLE subscriptions ADD COLUMN paid_amount FLOAT DEFAULT 0.0"))
+            if 'remaining_amount' not in columns:
+                conn.execute(text("ALTER TABLE subscriptions ADD COLUMN remaining_amount FLOAT DEFAULT 0.0"))
+            if 'payment_method_id' not in columns:
+                conn.execute(text("ALTER TABLE subscriptions ADD COLUMN payment_method_id INTEGER REFERENCES payment_methods(id)"))
+            if 'payment_status' not in columns:
+                conn.execute(text("ALTER TABLE subscriptions ADD COLUMN payment_status VARCHAR(30) DEFAULT 'مدفوع بالكامل'"))
+            conn.commit()
     except Exception as e:
         print(f"Migration check notice: {e}")
 
@@ -159,5 +171,29 @@ def seed_initial_data():
             db.session.add(acc)
             db.session.flush()
             acc_map[code] = acc.id
+
+    # 5. Payment Methods (أنواع وطرق الدفع)
+    if not PaymentMethod.query.first():
+        cash_acc = Account.query.filter_by(code="1101").first()
+        bank_acc = Account.query.filter_by(code="1102").first()
+        cash_id = cash_acc.id if cash_acc else None
+        bank_id = bank_acc.id if bank_acc else None
+
+        default_methods = [
+            ("كاش (نقداً)", "CASH", cash_id, "الدفع النقدي المباشر في خزينة النادي"),
+            ("محفظة جيب (Jeep)", "JEEP", cash_id, "الدفع عبر محفظة جيب الإلكترونية"),
+            ("محفظة الكريمي (Kurimi Pay)", "KURIMI", bank_id, "الدفع عبر حساب أو محفظة الكريمي مالي جوال"),
+            ("حوالة / تحويل بنكي", "BANK", bank_id, "إيداع أو تحويل بنكي مباشر"),
+            ("محفظة ون كاش (OneCash)", "ONECASH", cash_id, "الدفع عبر خدمة ون كاش"),
+            ("محفظة جوالي", "JAWALI", cash_id, "الدفع عبر محفظة جوالي الإلكترونية")
+        ]
+        for name, code, acc_id, notes in default_methods:
+            db.session.add(PaymentMethod(
+                name=name,
+                code=code,
+                account_id=acc_id,
+                is_active=True,
+                notes=notes
+            ))
 
     db.session.commit()

@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
 {% block title %}الاشتراكات{% endblock %}
-{% block header_title %}إدارة الاشتراكات{% endblock %}
+{% block header_title %}النادي اليمني الصحي · إدارة الاشتراكات والباقات{% endblock %}
 
 {% block content %}
 <div class="card" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
@@ -17,7 +17,8 @@
   </form>
 
   <div style="display: flex; gap: 0.5rem;">
-    <a href="{{ url_for('subscriptions.plans') }}" class="btn btn-secondary">⚙️ أنواع الاشتراكات</a>
+    <a href="{{ url_for('payments.methods') }}" class="btn btn-secondary">💳 أنواع الدفع</a>
+    <a href="{{ url_for('subscriptions.plans') }}" class="btn btn-secondary">📋 أنواع الاشتراكات</a>
     <button type="button" class="btn btn-primary" onclick="openModal('addSubscriptionModal')">➕ إنشاء اشتراك جديد</button>
   </div>
 </div>
@@ -31,9 +32,12 @@
           <th>اسم المشترك</th>
           <th>الباقة</th>
           <th>فترة التمرين</th>
-          <th>تاريخ البدء</th>
-          <th>تاريخ النهاية</th>
-          <th>المبلغ</th>
+          <th>الفترة</th>
+          <th>الإجمالي</th>
+          <th>المدفوع</th>
+          <th>المتبقي (دين)</th>
+          <th>طريقة الدفع</th>
+          <th>حالة السداد</th>
           <th>الحالة</th>
           <th>إجراءات</th>
         </tr>
@@ -53,9 +57,32 @@
               <span style="color: var(--text-caption); font-size: 0.78rem;">غير محدد</span>
             {% endif %}
           </td>
-          <td>{{ s.start_date }}</td>
-          <td>{{ s.end_date }}</td>
-          <td><strong>{{ "{:,.2f}".format(s.price_paid) }} ر.ي</strong></td>
+          <td style="font-size: 0.8rem; white-space: nowrap;">{{ s.start_date }}<br><small style="color: var(--text-muted);">إلى {{ s.end_date }}</small></td>
+          <td><strong>{{ "{:,.2f}".format(s.total_amount if s.total_amount else s.price_paid) }} ر.ي</strong></td>
+          <td><span style="color: #16a34a; font-weight: 800;">{{ "{:,.2f}".format(s.paid_amount if s.paid_amount is not none else s.price_paid) }} ر.ي</span></td>
+          <td>
+            {% if s.remaining_amount and s.remaining_amount > 0 %}
+              <span class="badge badge-danger" style="font-weight: 900;">{{ "{:,.2f}".format(s.remaining_amount) }} ر.ي</span>
+            {% else %}
+              <span class="badge badge-success">خالص</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if s.payment_method %}
+              <span style="font-weight: 700; font-size: 0.82rem; color: var(--text-main);">{{ s.payment_method.name }}</span>
+            {% else %}
+              <span style="color: var(--text-caption); font-size: 0.8rem;">كاش</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if s.payment_status == 'مدفوع بالكامل' or (not s.remaining_amount or s.remaining_amount <= 0) %}
+              <span class="badge badge-success">خالص</span>
+            {% elif s.payment_status == 'مدفوع جزئياً' %}
+              <span class="badge badge-warning">جزئي</span>
+            {% else %}
+              <span class="badge badge-danger">آجل</span>
+            {% endif %}
+          </td>
           <td>
             {% if s.is_active_now %}
               <span class="badge badge-success">ساري (متبقي {{ s.remaining_days }} يوم)</span>
@@ -65,20 +92,23 @@
               <span class="badge badge-warning">منتهي</span>
             {% endif %}
           </td>
-          <td>
+          <td style="white-space: nowrap;">
+            {% if s.remaining_amount and s.remaining_amount > 0 %}
+            <button type="button" class="btn btn-primary" style="font-size: 0.72rem; padding: 0.22rem 0.5rem; margin-left: 0.25rem;" onclick="openSubPayModal('{{ s.id }}', '{{ s.subscription_code }}', '{{ s.member.full_name }}', '{{ s.plan.name }}', '{{ s.remaining_amount }}')">
+              💵 سداد
+            </button>
+            {% endif %}
             {% if s.status == 'ساري' %}
             <form method="POST" action="{{ url_for('subscriptions.cancel', sub_id=s.id) }}" style="display: inline;" onsubmit="return confirm('هل تريد بالتأكيد إلغاء هذا الاشتراك؟');">
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
               <button type="submit" class="btn btn-secondary" style="font-size: 0.72rem; padding: 0.2rem 0.5rem; color: #dc2626;">إلغاء</button>
             </form>
-            {% else %}
-            <span style="color: #94a3b8; font-size: 0.75rem;">-</span>
             {% endif %}
           </td>
         </tr>
         {% else %}
         <tr>
-          <td colspan="8" style="text-align: center; color: #94a3b8; padding: 2rem;">لا توجد اشتراكات مطابقة.</td>
+          <td colspan="12" style="text-align: center; color: var(--text-caption); padding: 2.5rem; font-weight: 700;">لا توجد اشتراكات مطابقة.</td>
         </tr>
         {% endfor %}
       </tbody>
@@ -107,10 +137,10 @@
         </div>
         <div class="form-group">
           <label class="form-label">الباقة *</label>
-          <select name="plan_id" class="form-control" required>
-            <option value="">-- اختر الباقة --</option>
+          <select name="plan_id" id="sub_plan_select" class="form-control" required onchange="updateSubIndexPaymentCalc()">
+            <option value="" data-price="0">-- اختر الباقة --</option>
             {% for p in plans %}
-            <option value="{{ p.id }}">{{ p.name }} ({{ p.duration_days }} يوم - {{ p.price }} ر.ي)</option>
+            <option value="{{ p.id }}" data-price="{{ p.price }}">{{ p.name }} ({{ p.duration_days }} يوم - {{ "{:,.0f}".format(p.price) }} ر.ي)</option>
             {% endfor %}
           </select>
         </div>
@@ -123,6 +153,31 @@
             {% endfor %}
           </select>
         </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+          <div class="form-group">
+            <label class="form-label">طريقة / نوع الدفع</label>
+            <select name="payment_method_id" class="form-control">
+              {% for pm in payment_methods %}
+              <option value="{{ pm.id }}">{{ pm.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">المبلغ المدفوع حالياً (ر.ي)</label>
+            <input type="number" step="0.01" min="0" name="paid_amount" id="sub_paid_amount" class="form-control" placeholder="اتركه فارغاً لدفع كامل المبلغ" oninput="updateSubIndexPaymentCalc()">
+          </div>
+        </div>
+
+        <!-- Dynamic Debt/Payment Status Preview -->
+        <div id="sub_payment_calc_box" style="margin-bottom: 1rem; background: var(--badge-fire-bg); border: 1.5px solid var(--badge-fire-border); border-radius: 8px; padding: 0.65rem 0.85rem; font-size: 0.84rem; display: none;">
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+            <span>سعر الباقة: <strong id="sub_total_price" style="color: var(--text-main);">0</strong> ر.ي</span>
+            <span>المدفوع: <strong id="sub_paid_price" style="color: #16a34a;">0</strong> ر.ي</span>
+            <span>المتبقي (يسجل ديناً): <strong id="sub_rem_price" style="color: #dc2626; font-size: 0.95rem;">0</strong> ر.ي</span>
+          </div>
+        </div>
+
         <div class="form-group">
           <label class="form-label">تاريخ بداية الاشتراك (اختياري)</label>
           <input type="date" name="start_date" class="form-control" placeholder="YYYY-MM-DD">
@@ -142,4 +197,82 @@
     </form>
   </div>
 </div>
+
+<!-- Pay Remaining Balance Modal -->
+<div class="modal-overlay" id="subPayModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <span>سداد المبلغ المتبقي على الاشتراك</span>
+      <button type="button" onclick="closeModal('subPayModal')" style="background: none; border: none; font-size: 1.3rem; cursor: pointer; color: var(--text-main);">✕</button>
+    </div>
+    <form method="POST" id="subPayForm" action="">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="modal-body">
+        <div style="background: var(--badge-fire-bg); border: 1.5px solid var(--badge-fire-border); border-radius: 10px; padding: 0.85rem 1rem; margin-bottom: 1rem;">
+          <div style="font-size: 0.88rem; line-height: 1.8;">
+            <div><strong style="color: var(--text-caption);">المشترك:</strong> <span id="sub_pay_member" style="font-weight: 800; color: var(--text-main);">---</span></div>
+            <div><strong style="color: var(--text-caption);">الاشتراك:</strong> <span id="sub_pay_info" style="font-weight: 800; color: var(--primary);">---</span></div>
+            <div><strong style="color: var(--text-caption);">المبلغ المتبقي الحالي:</strong> <strong id="sub_pay_rem" style="color: #dc2626; font-size: 1.1rem;">0.00 ر.ي</strong></div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">طريقة / وسيلة الدفع *</label>
+          <select name="payment_method_id" class="form-control" required>
+            {% for pm in payment_methods %}
+            <option value="{{ pm.id }}">{{ pm.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">المبلغ المسدد الآن (ر.ي) *</label>
+          <input type="number" step="0.01" min="1" name="pay_amount" id="sub_pay_input" class="form-control" required>
+          <small style="display: block; margin-top: 4px; font-size: 0.72rem; color: var(--text-caption); font-weight: 700;">
+            سيتم خصم المبلغ من المتبقي، وتحديث رصيد المشترك، وإنشاء سند قبض مالي رسمي تلقائياً.
+          </small>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeModal('subPayModal')">إلغاء</button>
+        <button type="submit" class="btn btn-primary">تسجيل سند السداد والتحصيل</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+function updateSubIndexPaymentCalc() {
+  const select = document.getElementById('sub_plan_select');
+  const paidInput = document.getElementById('sub_paid_amount');
+  const box = document.getElementById('sub_payment_calc_box');
+  const selectedOpt = select.options[select.selectedIndex];
+  const price = parseFloat(selectedOpt.getAttribute('data-price') || 0);
+
+  if (price > 0) {
+    box.style.display = 'block';
+    let paidVal = paidInput.value !== '' ? parseFloat(paidInput.value) : price;
+    if (isNaN(paidVal) || paidVal < 0) paidVal = 0;
+    const rem = Math.max(0, price - paidVal);
+
+    document.getElementById('sub_total_price').textContent = price.toLocaleString();
+    document.getElementById('sub_paid_price').textContent = paidVal.toLocaleString();
+    document.getElementById('sub_rem_price').textContent = rem.toLocaleString();
+  } else {
+    box.style.display = 'none';
+  }
+}
+
+function openSubPayModal(subId, code, memberName, planName, remaining) {
+  document.getElementById('subPayForm').action = '/subscriptions/' + subId + '/pay-remaining';
+  document.getElementById('sub_pay_member').textContent = memberName;
+  document.getElementById('sub_pay_info').textContent = planName + ' (' + code + ')';
+  const remNum = parseFloat(remaining) || 0;
+  document.getElementById('sub_pay_rem').textContent = remNum.toLocaleString('en-US', {minimumFractionDigits: 2}) + ' ر.ي';
+  const inputEl = document.getElementById('sub_pay_input');
+  inputEl.max = remNum;
+  inputEl.value = remNum;
+  openModal('subPayModal');
+}
+</script>
 {% endblock %}

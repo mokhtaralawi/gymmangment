@@ -46,6 +46,10 @@ class Member(db.Model):
                 return sub
         return None
 
+    @property
+    def total_debt(self):
+        return sum(sub.remaining_amount for sub in self.subscriptions if sub.remaining_amount and sub.remaining_amount > 0)
+
 class Plan(db.Model):
     __tablename__ = "plans"
     id = db.Column(db.Integer, primary_key=True)
@@ -92,6 +96,17 @@ class Shift(db.Model):
             return self.employee.full_name
         return self.supervisor_name or "مسؤول الصالة"
 
+class PaymentMethod(db.Model):
+    __tablename__ = "payment_methods"
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False) # كاش، محفظة جيب، محفظة الكريمي
+    code = db.Column(db.String(50), unique=True, nullable=True)
+    account_id = db.Column(db.Integer, db.ForeignKey("accounts.id"), nullable=True)
+    is_active = db.Column(db.Boolean, default=True)
+    notes = db.Column(db.Text, nullable=True)
+
+    account = db.relationship("Account", backref="payment_methods")
+
 class Subscription(db.Model):
     __tablename__ = "subscriptions"
     id = db.Column(db.Integer, primary_key=True)
@@ -102,12 +117,18 @@ class Subscription(db.Model):
     start_date = db.Column(db.Date, nullable=False, default=date.today)
     end_date = db.Column(db.Date, nullable=False)
     price_paid = db.Column(db.Float, default=0.0)
+    total_amount = db.Column(db.Float, default=0.0)
+    paid_amount = db.Column(db.Float, default=0.0)
+    remaining_amount = db.Column(db.Float, default=0.0)
+    payment_method_id = db.Column(db.Integer, db.ForeignKey("payment_methods.id"), nullable=True)
+    payment_status = db.Column(db.String(30), default="مدفوع بالكامل")
     status = db.Column(db.String(30), default="ساري")
     cancel_reason = db.Column(db.String(255), nullable=True)
     notes = db.Column(db.Text, nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     plan = db.relationship("Plan", backref="subscriptions")
+    payment_method = db.relationship("PaymentMethod", backref="subscriptions")
 
     @property
     def is_active_now(self):

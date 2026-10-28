@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime, date, timedelta
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from flask_login import login_required
-from app.models import db, Member, Subscription, Plan, Shift
+from app.models import db, Member, Subscription, Plan, Shift, PaymentMethod, Voucher, Account
 from app.utils import log_audit
 
 members_bp = Blueprint("members", __name__)
@@ -56,6 +56,34 @@ def index():
                 end_d = start_d + timedelta(days=plan.duration_days)
                 sub_code = f"SUB-{uuid.uuid4().hex[:8].upper()}"
                 s_id = int(shift_id) if shift_id and shift_id.isdigit() else None
+
+                # Payment & Debt tracking
+                total_amount = float(plan.price)
+                paid_str = request.form.get("paid_amount")
+                if paid_str is not None and paid_str.strip() != "":
+                    try:
+                        paid_amount = float(paid_str.strip())
+                    except ValueError:
+                        paid_amount = total_amount
+                else:
+                    paid_amount = total_amount
+
+                paid_amount = max(0.0, paid_amount)
+                remaining_amount = max(0.0, total_amount - paid_amount)
+                if remaining_amount <= 0.0001:
+                    remaining_amount = 0.0
+                    payment_status = "مدفوع بالكامل"
+                elif paid_amount > 0:
+                    payment_status = "مدفوع جزئياً"
+                else:
+                    payment_status = "غير مدفوع (آجل)"
+
+                pm_id_str = request.form.get("payment_method_id")
+                pm_id = int(pm_id_str) if pm_id_str and pm_id_str.isdigit() else None
+                if not pm_id:
+                    default_pm = PaymentMethod.query.filter_by(is_active=True).first()
+                    pm_id = default_pm.id if default_pm else None
+
                 sub = Subscription(
                     subscription_code=sub_code,
                     member_id=member.id,
@@ -63,10 +91,42 @@ def index():
                     shift_id=s_id,
                     start_date=start_d,
                     end_date=end_d,
-                    price_paid=plan.price,
+                    price_paid=paid_amount,
+                    total_amount=total_amount,
+                    paid_amount=paid_amount,
+                    remaining_amount=remaining_amount,
+                    payment_method_id=pm_id,
+                    payment_status=payment_status,
                     status="ساري"
                 )
                 db.session.add(sub)
+                db.session.flush()
+
+                # Generate automated receipt voucher if paid_amount > 0
+                if paid_amount > 0:
+                    pm = PaymentMethod.query.get(pm_id) if pm_id else None
+                    cash_acc = Account.query.filter_by(code="1101").first()
+                    rev_acc = Account.query.filter_by(code="4101").first()
+                    target_acc_id = pm.account_id if (pm and pm.account_id) else (cash_acc.id if cash_acc else None)
+                    contra_acc_id = rev_acc.id if rev_acc else target_acc_id
+
+                    if target_acc_id and contra_acc_id:
+                        v_num = f"VCH-{uuid.uuid4().hex[:8].upper()}"
+                        pm_name = pm.name if pm else "كاش"
+                        desc = f"تحصيل اشتراك ({plan.name}) للمشترك {member.full_name} عبر {pm_name}"
+                        if remaining_amount > 0:
+                            desc += f" (دفعة مقدمة - المتبقي عليه: {remaining_amount:,.2f} ر.ي)"
+                        v = Voucher(
+                            voucher_number=v_num,
+                            voucher_type="قبض",
+                            voucher_date=start_d,
+                            amount=paid_amount,
+                            account_id=target_acc_id,
+                            contra_account_id=contra_acc_id,
+                            description=desc,
+                            status="مرحل"
+                        )
+                        db.session.add(v)
 
         db.session.commit()
         log_audit("members.create", target_type="member", target_id=member.id, details=f"إضافة مشترك: {full_name}")
@@ -80,9 +140,10 @@ def index():
     members_list = query.order_by(Member.id.desc()).all()
     plans = Plan.query.filter_by(is_active=True).all()
     shifts = Shift.query.filter_by(is_active=True).all()
+    payment_methods = PaymentMethod.query.filter_by(is_active=True).all()
 
     today_str = date.today().strftime("%Y-%m-%d")
-    return render_template("members/index.html", members=members_list, plans=plans, shifts=shifts, q=q, today=today_str)
+    return render_template("members/index.html", members=members_list, plans=plans, shifts=shifts, payment_methods=payment_methods, q=q, today=today_str)
 
 @members_bp.route("/<int:member_id>")
 @login_required
@@ -90,7 +151,8 @@ def show(member_id):
     member = Member.query.get_or_404(member_id)
     plans = Plan.query.filter_by(is_active=True).all()
     shifts = Shift.query.filter_by(is_active=True).all()
-    return render_template("members/show.html", member=member, plans=plans, shifts=shifts)
+    payment_methods = PaymentMethod.query.filter_by(is_active=True).all()
+    return render_template("members/show.html", member=member, plans=plans, shifts=shifts, payment_methods=payment_methods)
 
 @members_bp.route("/<int:member_id>/edit", methods=["POST"])
 @login_required
