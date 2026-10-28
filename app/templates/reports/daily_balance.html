@@ -138,11 +138,14 @@
   
   <!-- Inflow (سندات القبض والدخل) -->
   <div class="card">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 2px solid #16a34a;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 2px solid #16a34a; flex-wrap: wrap; gap: 0.5rem;">
       <h3 style="margin: 0; font-size: 1.1rem; font-weight: 900; color: #16a34a; display: flex; align-items: center; gap: 0.4rem;">
         <span>📥</span> مقبوضات اليوم (الدخل) [{{ income_vouchers|length }}]
       </h3>
-      <strong style="color: #16a34a; font-size: 1.15rem;">{{ "{:,.2f}".format(total_income) }} ر.ي</strong>
+      <div style="display: flex; align-items: center; gap: 0.5rem;">
+        <input type="text" placeholder="فلترة بالسند أو المشترك..." class="form-control" style="width: 160px; padding: 0.25rem 0.5rem; font-size: 0.78rem;" oninput="InstantFilter.filterTable(this.closest('.card').querySelector('table'), this.value)">
+        <strong style="color: #16a34a; font-size: 1.15rem;">{{ "{:,.2f}".format(total_income) }} ر.ي</strong>
+      </div>
     </div>
 
     <div class="table-responsive">
@@ -183,11 +186,14 @@
 
   <!-- Outflow (سندات الصرف والخرج) -->
   <div class="card">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 2px solid #dc2626;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 2px solid #dc2626; flex-wrap: wrap; gap: 0.5rem;">
       <h3 style="margin: 0; font-size: 1.1rem; font-weight: 900; color: #dc2626; display: flex; align-items: center; gap: 0.4rem;">
         <span>📤</span> مدفوعات اليوم (الخرج) [{{ expense_vouchers|length }}]
       </h3>
-      <strong style="color: #dc2626; font-size: 1.15rem;">{{ "{:,.2f}".format(total_expenses) }} ر.ي</strong>
+      <div style="display: flex; align-items: center; gap: 0.5rem;">
+        <input type="text" placeholder="فلترة بالسند أو المصروف..." class="form-control" style="width: 160px; padding: 0.25rem 0.5rem; font-size: 0.78rem;" oninput="InstantFilter.filterTable(this.closest('.card').querySelector('table'), this.value)">
+        <strong style="color: #dc2626; font-size: 1.15rem;">{{ "{:,.2f}".format(total_expenses) }} ر.ي</strong>
+      </div>
     </div>
 
     <div class="table-responsive">

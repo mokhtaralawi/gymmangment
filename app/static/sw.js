@@ -3,6 +3,7 @@ const STATIC_ASSETS = [
   '/',
   '/dashboard/',
   '/static/css/theme-iron.css',
+  '/static/js/instant-filter.js',
   '/static/manifest.json',
   '/static/icons/icon-192.png',
   '/static/icons/icon-512.png',

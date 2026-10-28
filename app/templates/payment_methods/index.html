@@ -14,9 +14,15 @@
     </p>
   </div>
 
-  <button type="button" class="btn btn-primary" onclick="openModal('addMethodModal')">
-    ➕ إضافة نوع دفع جديد
-  </button>
+  <div style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;">
+    <div style="position: relative; min-width: 240px;">
+      <input type="text" name="q" placeholder="فلترة سريعة بالاسم أو الكود..." class="form-control" style="padding-left: 2rem;">
+      <span style="position: absolute; left: 8px; top: 50%; transform: translateY(-50%); font-size: 0.9rem; pointer-events: none;">🔍</span>
+    </div>
+    <button type="button" class="btn btn-primary" onclick="openModal('addMethodModal')">
+      ➕ إضافة نوع دفع جديد
+    </button>
+  </div>
 </div>
 
 <!-- Grid of Payment Methods -->

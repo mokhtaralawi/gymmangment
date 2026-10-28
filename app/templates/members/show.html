@@ -108,7 +108,10 @@
   <div>
     <!-- Subscriptions List -->
     <div class="card">
-      <h3 style="margin: 0 0 1.15rem 0; font-size: 1.05rem; font-weight: 900; color: var(--text-main);">سجل الاشتراكات والباقات</h3>
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.15rem; flex-wrap: wrap; gap: 0.5rem;">
+        <h3 style="margin: 0; font-size: 1.05rem; font-weight: 900; color: var(--text-main);">سجل الاشتراكات والباقات</h3>
+        <input type="text" placeholder="فلترة سريعة بالباقة أو الكود..." class="form-control" style="width: 210px; padding: 0.25rem 0.6rem; font-size: 0.8rem;" oninput="InstantFilter.filterTable(this.closest('.card').querySelector('table'), this.value)">
+      </div>
       <div class="table-responsive">
         <table>
           <thead>
@@ -205,10 +208,11 @@
 
     <!-- Attendance History -->
     <div class="card">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.15rem;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.15rem; flex-wrap: wrap; gap: 0.5rem;">
         <h3 style="margin: 0; font-size: 1.05rem; font-weight: 900; color: var(--text-main);">
           سجل الحضور والتمارين الرياضية ({{ member.attendances|length }} زيارة)
         </h3>
+        <input type="text" placeholder="فلترة سريعة بالتاريخ أو الملاحظة..." class="form-control" style="width: 210px; padding: 0.25rem 0.6rem; font-size: 0.8rem;" oninput="InstantFilter.filterTable(this.closest('.card').querySelector('table'), this.value)">
       </div>
       <div class="table-responsive">
         <table>

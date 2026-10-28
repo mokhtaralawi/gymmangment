@@ -227,11 +227,14 @@
   
   <!-- Income Vouchers (سندات القبض) -->
   <div class="card">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem;">
       <h3 style="margin: 0; font-size: 1.05rem; font-weight: 900; color: #16a34a; display: flex; align-items: center; gap: 0.5rem;">
         <span>📥</span> سندات القبض والدخل ({{ income_vouchers|length }})
       </h3>
-      <strong style="color: #16a34a; font-size: 1.05rem;">{{ "{:,.2f}".format(total_income) }} ر.ي</strong>
+      <div style="display: flex; align-items: center; gap: 0.5rem;">
+        <input type="text" placeholder="فلترة سريعة بالسند أو المشترك..." class="form-control" style="width: 170px; padding: 0.25rem 0.5rem; font-size: 0.78rem;" oninput="InstantFilter.filterTable(this.closest('.card').querySelector('table'), this.value)">
+        <strong style="color: #16a34a; font-size: 1.05rem;">{{ "{:,.2f}".format(total_income) }} ر.ي</strong>
+      </div>
     </div>
     <div class="table-responsive" style="max-height: 380px; overflow-y: auto;">
       <table>
@@ -261,11 +264,14 @@
 
   <!-- Expense Vouchers (سندات الصرف) -->
   <div class="card">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem;">
       <h3 style="margin: 0; font-size: 1.05rem; font-weight: 900; color: #dc2626; display: flex; align-items: center; gap: 0.5rem;">
         <span>📤</span> سندات الصرف والخرج ({{ expense_vouchers|length }})
       </h3>
-      <strong style="color: #dc2626; font-size: 1.05rem;">{{ "{:,.2f}".format(total_expenses) }} ر.ي</strong>
+      <div style="display: flex; align-items: center; gap: 0.5rem;">
+        <input type="text" placeholder="فلترة سريعة بالسند أو المصروف..." class="form-control" style="width: 170px; padding: 0.25rem 0.5rem; font-size: 0.78rem;" oninput="InstantFilter.filterTable(this.closest('.card').querySelector('table'), this.value)">
+        <strong style="color: #dc2626; font-size: 1.05rem;">{{ "{:,.2f}".format(total_expenses) }} ر.ي</strong>
+      </div>
     </div>
     <div class="table-responsive" style="max-height: 380px; overflow-y: auto;">
       <table>

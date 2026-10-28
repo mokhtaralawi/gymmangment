@@ -5,9 +5,13 @@
 
 {% block content %}
 <div class="card" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
-  <div>
+  <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
     <button type="button" class="btn btn-secondary" onclick="expandAll()">توسيع الكل</button>
     <button type="button" class="btn btn-secondary" onclick="collapseAll()">طي الكل</button>
+    <div style="position: relative; min-width: 250px;">
+      <input type="text" name="q" placeholder="فلترة سريعة بالاسم أو رقم الحساب..." class="form-control" style="padding-left: 2rem;">
+      <span style="position: absolute; left: 8px; top: 50%; transform: translateY(-50%); font-size: 0.9rem; pointer-events: none;">🔍</span>
+    </div>
   </div>
   <button type="button" class="btn btn-primary" onclick="openModal('addAccountModal')">➕ حساب جديد</button>
 </div>
