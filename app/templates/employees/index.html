@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+
+{% block title %}ملفات الموظفين{% endblock %}
+{% block header_title %}شؤون الموظفين والمدربين{% endblock %}
+
+{% block content %}
+<div class="card" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+  <form method="GET" action="{{ url_for('employees.index') }}" style="display: flex; gap: 0.5rem; flex: 1; max-width: 400px;">
+    <input type="text" name="q" value="{{ q }}" placeholder="بحث باسم الموظف أو الهاتف أو المسمى..." class="form-control">
+    <button type="submit" class="btn btn-secondary">بحث</button>
+  </form>
+
+  <div style="display: flex; gap: 0.5rem;">
+    <a href="{{ url_for('employees.attendance') }}" class="btn btn-secondary">🖲️ الحضور والانصراف</a>
+    <a href="{{ url_for('employees.payroll') }}" class="btn btn-secondary">💰 مسير الرواتب</a>
+    <button type="button" class="btn btn-primary" onclick="openModal('addEmployeeModal')">➕ إضافة موظف جديد</button>
+  </div>
+</div>
+
+<div class="card">
+  <div class="table-responsive">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>الاسم الكامل</th>
+          <th>المسمى الوظيفي</th>
+          <th>رقم الهاتف</th>
+          <th>كود جهاز البصمة</th>
+          <th>الراتب الأساسي</th>
+          <th>تاريخ التعيين</th>
+          <th>الحالة</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for e in employees %}
+        <tr>
+          <td>{{ e.id }}</td>
+          <td><strong>{{ e.full_name }}</strong></td>
+          <td>{{ e.job_title }}</td>
+          <td>{{ e.phone }}</td>
+          <td><code>{{ e.device_code or '-' }}</code></td>
+          <td>{{ "{:,.2f}".format(e.basic_salary) }} ر.ي</td>
+          <td>{{ e.hire_date }}</td>
+          <td>
+            {% if e.is_active %}
+              <span class="badge badge-success">على رأس العمل</span>
+            {% else %}
+              <span class="badge badge-danger">متوقف</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="8" style="text-align: center; color: #94a3b8; padding: 2rem;">لا يوجد موظفون مسجلون.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Modal Add Employee -->
+<div class="modal-overlay" id="addEmployeeModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <span>إضافة موظف / مدرب جديد</span>
+      <button type="button" onclick="closeModal('addEmployeeModal')" style="background: none; border: none; font-size: 1.2rem; cursor: pointer;">✕</button>
+    </div>
+    <form method="POST" action="{{ url_for('employees.index') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">الاسم الكامل *</label>
+          <input type="text" name="full_name" class="form-control" required placeholder="اسم الموظف أو الكابتن">
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+          <div class="form-group">
+            <label class="form-label">المسمى الوظيفي *</label>
+            <input type="text" name="job_title" class="form-control" required placeholder="مدرب حديد، استقبال، محاسب...">
+          </div>
+          <div class="form-group">
+            <label class="form-label">رقم الهاتف *</label>
+            <input type="text" name="phone" class="form-control" required placeholder="77xxxxxxx">
+          </div>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+          <div class="form-group">
+            <label class="form-label">كود جهاز البصمة</label>
+            <input type="text" name="device_code" class="form-control" placeholder="رقم الموظف في جهاز الحضور">
+          </div>
+          <div class="form-group">
+            <label class="form-label">الراتب الأساسي (ر.ي)</label>
+            <input type="number" step="any" name="basic_salary" class="form-control" value="0">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">تاريخ التعيين</label>
+          <input type="date" name="hire_date" class="form-control">
+        </div>
+        <div class="form-group">
+          <label class="form-label">ملاحظات إضافية</label>
+          <textarea name="notes" class="form-control" rows="2"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeModal('addEmployeeModal')">إلغاء</button>
+        <button type="submit" class="btn btn-primary">حفظ الموظف</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+
+{% block title %}الاشتراكات{% endblock %}
+{% block header_title %}إدارة الاشتراكات{% endblock %}
+
+{% block content %}
+<div class="card" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+  <form method="GET" action="{{ url_for('subscriptions.index') }}" style="display: flex; gap: 0.5rem; flex: 1; max-width: 500px;">
+    <input type="text" name="q" value="{{ q }}" placeholder="بحث باسم المشترك أو رقم الاشتراك..." class="form-control">
+    <select name="status" class="form-control" style="max-width: 130px;">
+      <option value="">كل الحالات</option>
+      <option value="ساري" {% if status_filter == 'ساري' %}selected{% endif %}>ساري</option>
+      <option value="منتهي" {% if status_filter == 'منتهي' %}selected{% endif %}>منتهي</option>
+      <option value="ملغي" {% if status_filter == 'ملغي' %}selected{% endif %}>ملغي</option>
+    </select>
+    <button type="submit" class="btn btn-secondary">تصفية</button>
+  </form>
+
+  <div style="display: flex; gap: 0.5rem;">
+    <a href="{{ url_for('subscriptions.plans') }}" class="btn btn-secondary">⚙️ أنواع الاشتراكات</a>
+    <button type="button" class="btn btn-primary" onclick="openModal('addSubscriptionModal')">➕ إنشاء اشتراك جديد</button>
+  </div>
+</div>
+
+<div class="card">
+  <div class="table-responsive">
+    <table>
+      <thead>
+        <tr>
+          <th>رقم الاشتراك</th>
+          <th>اسم المشترك</th>
+          <th>الباقة</th>
+          <th>تاريخ البدء</th>
+          <th>تاريخ النهاية</th>
+          <th>المبلغ</th>
+          <th>الحالة</th>
+          <th>إجراءات</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for s in subscriptions %}
+        <tr>
+          <td><code>{{ s.subscription_code }}</code></td>
+          <td><strong><a href="{{ url_for('members.show', member_id=s.member_id) }}" style="color: #2563eb; text-decoration: none;">{{ s.member.full_name }}</a></strong></td>
+          <td>{{ s.plan.name }}</td>
+          <td>{{ s.start_date }}</td>
+          <td>{{ s.end_date }}</td>
+          <td>{{ s.price_paid }} ر.ي</td>
+          <td>
+            {% if s.is_active_now %}
+              <span class="badge badge-success">ساري (متبقي {{ s.remaining_days }} يوم)</span>
+            {% elif s.status == 'ملغي' %}
+              <span class="badge badge-danger">ملغي</span>
+            {% else %}
+              <span class="badge badge-warning">منتهي</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if s.status == 'ساري' %}
+            <form method="POST" action="{{ url_for('subscriptions.cancel', sub_id=s.id) }}" style="display: inline;" onsubmit="return confirm('هل تريد بالتأكيد إلغاء هذا الاشتراك؟');">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button type="submit" class="btn btn-secondary" style="font-size: 0.72rem; padding: 0.2rem 0.5rem; color: #dc2626;">إلغاء</button>
+            </form>
+            {% else %}
+            <span style="color: #94a3b8; font-size: 0.75rem;">-</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="8" style="text-align: center; color: #94a3b8; padding: 2rem;">لا توجد اشتراكات مطابقة.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Modal Create Subscription -->
+<div class="modal-overlay" id="addSubscriptionModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <span>إنشاء اشتراك جديد</span>
+      <button type="button" onclick="closeModal('addSubscriptionModal')" style="background: none; border: none; font-size: 1.2rem; cursor: pointer;">✕</button>
+    </div>
+    <form method="POST" action="{{ url_for('subscriptions.index') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">المشترك *</label>
+          <select name="member_id" class="form-control" required>
+            <option value="">-- اختر المشترك --</option>
+            {% for m in members %}
+            <option value="{{ m.id }}">{{ m.full_name }} ({{ m.phone }})</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">الباقة *</label>
+          <select name="plan_id" class="form-control" required>
+            <option value="">-- اختر الباقة --</option>
+            {% for p in plans %}
+            <option value="{{ p.id }}">{{ p.name }} ({{ p.duration_days }} يوم - {{ p.price }} ر.ي)</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">تاريخ البدء</label>
+          <input type="date" name="start_date" class="form-control">
+        </div>
+        <div class="form-group">
+          <label class="form-label">ملاحظات</label>
+          <textarea name="notes" class="form-control" rows="2"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeModal('addSubscriptionModal')">إلغاء</button>
+        <button type="submit" class="btn btn-primary">حفظ وتفعيل الاشتراك</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

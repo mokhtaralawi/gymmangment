@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block title %}حسابي وأمان الدخول{% endblock %}
+{% block header_title %}حسابي وأمان الدخول{% endblock %}
+
+{% block content %}
+<div style="display: grid; grid-template-columns: 1fr 2fr; gap: 1.5rem; max-width: 900px;">
+  <!-- User Details -->
+  <div class="card" style="text-align: center;">
+    <div style="width: 80px; height: 80px; background: #2563eb; color: #fff; border-radius: 50%; display: grid; place-items: center; font-size: 2rem; font-weight: bold; margin: 0 auto 1rem auto;">
+      {{ current_user.full_name[0] }}
+    </div>
+    <h3 style="margin: 0 0 0.25rem 0;">{{ current_user.full_name }}</h3>
+    <code style="color: #64748b;">@{{ current_user.username }}</code>
+    <div style="margin-top: 0.75rem;">
+      <span class="badge badge-info">{{ current_user.role_name }}</span>
+    </div>
+    <div style="margin-top: 1rem; font-size: 0.8rem; color: #94a3b8;">
+      تاريخ التسجيل: {{ current_user.created_at.strftime('%Y-%m-%d') }}
+    </div>
+  </div>
+
+  <!-- Change Password -->
+  <div class="card">
+    <h3 style="margin: 0 0 1rem 0; font-size: 1.1rem;">تغيير كلمة المرور</h3>
+    <form method="POST" action="{{ url_for('auth.profile') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+      <div class="form-group">
+        <label class="form-label">كلمة المرور الحالية *</label>
+        <input type="password" name="old_password" class="form-control" required>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">كلمة المرور الجديدة *</label>
+        <input type="password" name="new_password" class="form-control" required minlength="6">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">تأكيد كلمة المرور الجديدة *</label>
+        <input type="password" name="confirm_password" class="form-control" required minlength="6">
+      </div>
+
+      <div style="margin-top: 1.5rem;">
+        <button type="submit" class="btn btn-primary">تحديث كلمة المرور</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+
+{% block title %}شجرة الحسابات{% endblock %}
+{% block header_title %}دليل الحسابات الشجري{% endblock %}
+
+{% block content %}
+<div class="card" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+  <div>
+    <button type="button" class="btn btn-secondary" onclick="expandAll()">توسيع الكل</button>
+    <button type="button" class="btn btn-secondary" onclick="collapseAll()">طي الكل</button>
+  </div>
+  <button type="button" class="btn btn-primary" onclick="openModal('addAccountModal')">➕ حساب جديد</button>
+</div>
+
+<div class="card">
+  <div style="font-family: monospace; font-size: 0.95rem;">
+    {% for root in root_accounts %}
+      <div style="margin-bottom: 1rem; border-bottom: 1px solid #f1f5f9; padding-bottom: 0.75rem;">
+        <div style="font-weight: 800; font-size: 1.05rem; color: #1e40af; cursor: pointer; padding: 0.4rem 0;" onclick="toggleNode('node-{{ root.id }}')">
+          📁 {{ root.code }} - {{ root.name }}
+          <span style="font-size: 0.75rem; color: #64748b; font-weight: normal; margin-right: 0.5rem;">[{{ root.node_type }}]</span>
+        </div>
+        <div id="node-{{ root.id }}" style="padding-right: 1.5rem;">
+          {% for child in root.children %}
+            <div style="margin: 0.4rem 0;">
+              <div style="font-weight: 700; color: #334155; cursor: pointer; padding: 0.3rem 0;" onclick="toggleNode('node-{{ child.id }}')">
+                📂 {{ child.code }} - {{ child.name }}
+                <span style="font-size: 0.72rem; color: #94a3b8; font-weight: normal; margin-right: 0.5rem;">[{{ child.node_type }}]</span>
+              </div>
+              <div id="node-{{ child.id }}" style="padding-right: 1.5rem;">
+                {% for sub in child.children %}
+                  <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.3rem 0.5rem; background: #f8fafc; border-radius: 6px; margin: 0.2rem 0;">
+                    <span>📄 <strong>{{ sub.code }}</strong> - {{ sub.name }} <span style="font-size: 0.72rem; color: #64748b;">({{ sub.node_type }})</span></span>
+                    <span style="font-weight: bold; color: {% if sub.balance >= 0 %}#16a34a{% else %}#dc2626{% endif %};">
+                      {{ "{:,.2f}".format(sub.balance) }} ر.ي
+                    </span>
+                  </div>
+                {% endfor %}
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- Modal Add Account -->
+<div class="modal-overlay" id="addAccountModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <span>إضافة حساب مالي جديد</span>
+      <button type="button" onclick="closeModal('addAccountModal')" style="background: none; border: none; font-size: 1.2rem; cursor: pointer;">✕</button>
+    </div>
+    <form method="POST" action="{{ url_for('accounting.create_account') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="modal-body">
+        <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 1rem;">
+          <div class="form-group">
+            <label class="form-label">رقم الحساب (الكود) *</label>
+            <input type="text" name="code" class="form-control" required placeholder="مثال: 5110">
+          </div>
+          <div class="form-group">
+            <label class="form-label">اسم الحساب *</label>
+            <input type="text" name="name" class="form-control" required placeholder="مثال: مصروفات مياه">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">الحساب الرئيسي (الأب)</label>
+          <select name="parent_id" class="form-control">
+            <option value="">-- بدون حساب أب (رئيسي) --</option>
+            {% for a in all_accounts %}
+            <option value="{{ a.id }}">{{ a.code }} - {{ a.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+          <div class="form-group">
+            <label class="form-label">نوع الحساب</label>
+            <select name="node_type" class="form-control">
+              <option value="فرعي">فرعي</option>
+              <option value="صندوق">صندوق</option>
+              <option value="بنك">بنك</option>
+              <option value="إيراد">إيراد</option>
+              <option value="مصروف">مصروف</option>
+              <option value="تجميعي">تجميعي</option>
+            </select>
+          </div>
+          <div class="form-group" style="display: flex; align-items: center; margin-top: 1.75rem;">
+            <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.88rem; cursor: pointer;">
+              <input type="checkbox" name="is_postable" value="1" checked>
+              <span>يقبل الترحيل المباشر</span>
+            </label>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeModal('addAccountModal')">إلغاء</button>
+        <button type="submit" class="btn btn-primary">حفظ الحساب</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  function toggleNode(id) {
+    const el = document.getElementById(id);
+    if (el) el.style.display = (el.style.display === 'none') ? 'block' : 'none';
+  }
+  function expandAll() {
+    document.querySelectorAll('[id^="node-"]').forEach(el => el.style.display = 'block');
+  }
+  function collapseAll() {
+    document.querySelectorAll('[id^="node-"]').forEach(el => el.style.display = 'none');
+  }
+</script>
+{% endblock %}

@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+
+{% block title %}مسير الرواتب{% endblock %}
+{% block header_title %}مسير الرواتب الشهري{% endblock %}
+
+{% block content %}
+<div class="card" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+  <form method="GET" action="{{ url_for('employees.payroll') }}" style="display: flex; align-items: center; gap: 0.5rem;">
+    <label class="form-label" style="margin: 0;">الشهر:</label>
+    <input type="month" name="month" value="{{ month }}" class="form-control" style="width: auto;" onchange="this.form.submit()">
+    <button type="submit" class="btn btn-secondary">عرض</button>
+  </form>
+
+  <div>
+    <button type="button" class="btn btn-secondary" onclick="window.print()">🖨️ طباعة المسير</button>
+  </div>
+</div>
+
+<div class="card">
+  <div class="table-responsive">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>الموظف</th>
+          <th>المسمى الوظيفي</th>
+          <th>الراتب الأساسي</th>
+          <th>المكافآت (+)</th>
+          <th>الخصومات (-)</th>
+          <th>السلف المستقطعة (-)</th>
+          <th>الصافي المستحق</th>
+          <th>الحالة</th>
+          <th>إجراءات</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in records %}
+        <tr>
+          <td>{{ loop.index }}</td>
+          <td><strong>{{ r.employee.full_name }}</strong></td>
+          <td>{{ r.employee.job_title }}</td>
+          <td>{{ "{:,.2f}".format(r.basic_salary) }}</td>
+          <td style="color: #16a34a;">+{{ "{:,.2f}".format(r.bonus) }}</td>
+          <td style="color: #dc2626;">-{{ "{:,.2f}".format(r.deductions) }}</td>
+          <td style="color: #ea580c;">-{{ "{:,.2f}".format(r.loan_deduction) }}</td>
+          <td><strong style="color: #2563eb; font-size: 1rem;">{{ "{:,.2f}".format(r.net_salary) }} ر.ي</strong></td>
+          <td>
+            {% if r.status == 'معتمد' %}
+              <span class="badge badge-success">معتمد</span>
+            {% else %}
+              <span class="badge badge-warning">مسودة</span>
+            {% endif %}
+          </td>
+          <td>
+            <button type="button" class="btn btn-secondary" style="font-size: 0.72rem; padding: 0.2rem 0.5rem;" onclick="openEditPayrollModal('{{ r.id }}', '{{ r.employee.full_name }}', '{{ r.basic_salary }}', '{{ r.bonus }}', '{{ r.deductions }}', '{{ r.loan_deduction }}')">
+              تعديل البدلات
+            </button>
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="10" style="text-align: center; color: #94a3b8; padding: 2rem;">لا يوجد موظفون نشطون مسجلون في هذا الشهر.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+      <tfoot>
+        <tr style="background: #f8fafc; font-weight: bold;">
+          <td colspan="3">الإجماليات:</td>
+          <td>{{ "{:,.2f}".format(total_basic) }}</td>
+          <td style="color: #16a34a;">+{{ "{:,.2f}".format(total_bonus) }}</td>
+          <td style="color: #dc2626;">-{{ "{:,.2f}".format(total_deductions) }}</td>
+          <td style="color: #ea580c;">-{{ "{:,.2f}".format(total_loans) }}</td>
+          <td style="color: #2563eb; font-size: 1.05rem;">{{ "{:,.2f}".format(total_net) }} ريال</td>
+          <td colspan="2"></td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+</div>
+
+<!-- Modal Edit Payroll Item -->
+<div class="modal-overlay" id="editPayrollModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <span id="modalEmpTitle">تعديل أجور الموظف</span>
+      <button type="button" onclick="closeModal('editPayrollModal')" style="background: none; border: none; font-size: 1.2rem; cursor: pointer;">✕</button>
+    </div>
+    <form id="editPayrollForm" method="POST" action="">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">الراتب الأساسي</label>
+          <input type="text" id="pBasicSalary" class="form-control" readonly disabled>
+        </div>
+        <div class="form-group">
+          <label class="form-label">المكافآت والبدلات (+)</label>
+          <input type="number" step="any" name="bonus" id="pBonus" class="form-control" value="0">
+        </div>
+        <div class="form-group">
+          <label class="form-label">الخصومات والغياب (-)</label>
+          <input type="number" step="any" name="deductions" id="pDeductions" class="form-control" value="0">
+        </div>
+        <div class="form-group">
+          <label class="form-label">السلف المستقطعة (-)</label>
+          <input type="number" step="any" name="loan_deduction" id="pLoans" class="form-control" value="0">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeModal('editPayrollModal')">إلغاء</button>
+        <button type="submit" class="btn btn-primary">حفظ واعتماد</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  function openEditPayrollModal(id, name, basic, bonus, ded, loans) {
+    document.getElementById('modalEmpTitle').innerText = 'تعديل أجور الموظف: ' + name;
+    document.getElementById('editPayrollForm').action = '/employees/payroll/' + id + '/update';
+    document.getElementById('pBasicSalary').value = basic + ' ر.ي';
+    document.getElementById('pBonus').value = bonus;
+    document.getElementById('pDeductions').value = ded;
+    document.getElementById('pLoans').value = loans;
+    openModal('editPayrollModal');
+  }
+</script>
+{% endblock %}

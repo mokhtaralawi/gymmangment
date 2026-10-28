@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+
+{% block title %}المشتركون{% endblock %}
+{% block header_title %}دليل المشتركين{% endblock %}
+
+{% block content %}
+<div class="card" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+  <!-- Search -->
+  <form method="GET" action="{{ url_for('members.index') }}" style="display: flex; gap: 0.5rem; flex: 1; max-width: 400px;">
+    <input type="text" name="q" value="{{ q }}" placeholder="بحث بالاسم أو رقم الهاتف أو الكود..." class="form-control">
+    <button type="submit" class="btn btn-secondary">بحث</button>
+  </form>
+
+  <button type="button" class="btn btn-primary" onclick="openModal('addMemberModal')">
+    ➕ مشترك جديد
+  </button>
+</div>
+
+<div class="card">
+  <div class="table-responsive">
+    <table>
+      <thead>
+        <tr>
+          <th>كود المشترك</th>
+          <th>الاسم الكامل</th>
+          <th>رقم الهاتف</th>
+          <th>الجنس</th>
+          <th>الاشتراك الحالي</th>
+          <th>تاريخ التسجيل</th>
+          <th>الحالة</th>
+          <th>إجراءات</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for m in members %}
+        <tr>
+          <td><code>{{ m.member_code }}</code></td>
+          <td><strong><a href="{{ url_for('members.show', member_id=m.id) }}" style="color: #2563eb; text-decoration: none;">{{ m.full_name }}</a></strong></td>
+          <td>{{ m.phone }}</td>
+          <td>{{ m.gender }}</td>
+          <td>
+            {% if m.active_subscription %}
+              <span class="badge badge-success">{{ m.active_subscription.plan.name }} (متبقي {{ m.active_subscription.remaining_days }} يوم)</span>
+            {% else %}
+              <span class="badge badge-warning">بدون اشتراك نشط</span>
+            {% endif %}
+          </td>
+          <td>{{ m.created_at.strftime('%Y-%m-%d') }}</td>
+          <td><span class="badge badge-success">{{ m.status }}</span></td>
+          <td>
+            <a href="{{ url_for('members.show', member_id=m.id) }}" class="btn btn-secondary" style="font-size: 0.75rem; padding: 0.25rem 0.5rem;">عرض الملف</a>
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="8" style="text-align: center; color: #94a3b8; padding: 2rem;">لا توجد نتائج مطابقة.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Add Member Modal -->
+<div class="modal-overlay" id="addMemberModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <span>إضافة مشترك جديد</span>
+      <button type="button" onclick="closeModal('addMemberModal')" style="background: none; border: none; font-size: 1.2rem; cursor: pointer;">✕</button>
+    </div>
+    <form method="POST" action="{{ url_for('members.index') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">الاسم الكامل *</label>
+          <input type="text" name="full_name" class="form-control" required placeholder="مثال: أحمد محمد علي">
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+          <div class="form-group">
+            <label class="form-label">رقم الهاتف *</label>
+            <input type="text" name="phone" class="form-control" required placeholder="77xxxxxxx">
+          </div>
+          <div class="form-group">
+            <label class="form-label">الجنس</label>
+            <select name="gender" class="form-control">
+              <option value="ذكر">ذكر</option>
+              <option value="أنثى">أنثى</option>
+            </select>
+          </div>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+          <div class="form-group">
+            <label class="form-label">تاريخ الميلاد</label>
+            <input type="date" name="birth_date" class="form-control">
+          </div>
+          <div class="form-group">
+            <label class="form-label">الاشتراك المبدئي (اختياري)</label>
+            <select name="initial_plan_id" class="form-control">
+              <option value="">-- بدون اشتراك فوري --</option>
+              {% for p in plans %}
+              <option value="{{ p.id }}">{{ p.name }} ({{ p.duration_days }} يوم - {{ p.price }} ر.ي)</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">العنوان</label>
+          <input type="text" name="address" class="form-control" placeholder="المدينة / الشارع">
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+          <div class="form-group">
+            <label class="form-label">اسم هاتف الطوارئ</label>
+            <input type="text" name="emergency_contact_name" class="form-control">
+          </div>
+          <div class="form-group">
+            <label class="form-label">رقم هاتف الطوارئ</label>
+            <input type="text" name="emergency_contact_phone" class="form-control">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">ملاحظات إضافية</label>
+          <textarea name="notes" class="form-control" rows="2"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeModal('addMemberModal')">إلغاء</button>
+        <button type="submit" class="btn btn-primary">حفظ المشترك</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

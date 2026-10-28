@@ -1,0 +1,180 @@
+{% extends "base.html" %}
+
+{% block title %}لوحة التحكم{% endblock %}
+{% block header_title %}لوحة التحكم · نظرة عامة{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 1.5rem;">
+  <h2 style="margin: 0 0 0.25rem 0; font-size: 1.5rem; font-weight: 800; color: #0f172a;">أهلاً {{ current_user.full_name }} 👋</h2>
+  <span style="display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.82rem; color: #16a34a; background: #dcfce7; padding: 3px 8px; border-radius: 20px; font-weight: 600;">
+    <span style="width: 8px; height: 8px; background: #16a34a; border-radius: 50%;"></span>
+    النظام متصل ومحدث
+  </span>
+</div>
+
+<!-- KPIs -->
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+  <div class="card" style="display: flex; align-items: center; gap: 1rem; margin-bottom: 0;">
+    <div style="width: 48px; height: 48px; background: #eff6ff; color: #2563eb; border-radius: 12px; display: grid; place-items: center; font-size: 1.5rem;">👥</div>
+    <div>
+      <span style="font-size: 0.8rem; color: #64748b; font-weight: 600;">المشتركون النشطون</span>
+      <h3 style="margin: 0.2rem 0 0 0; font-size: 1.6rem; font-weight: 800; color: #0f172a;">{{ active_members_count }}</h3>
+    </div>
+  </div>
+
+  <div class="card" style="display: flex; align-items: center; gap: 1rem; margin-bottom: 0;">
+    <div style="width: 48px; height: 48px; background: #f0fdf4; color: #16a34a; border-radius: 12px; display: grid; place-items: center; font-size: 1.5rem;">💳</div>
+    <div>
+      <span style="font-size: 0.8rem; color: #64748b; font-weight: 600;">الاشتراكات السارية</span>
+      <h3 style="margin: 0.2rem 0 0 0; font-size: 1.6rem; font-weight: 800; color: #0f172a;">{{ active_subs_count }}</h3>
+    </div>
+  </div>
+
+  <div class="card" style="display: flex; align-items: center; gap: 1rem; margin-bottom: 0;">
+    <div style="width: 48px; height: 48px; background: #fefce8; color: #ca8a04; border-radius: 12px; display: grid; place-items: center; font-size: 1.5rem;">📥</div>
+    <div>
+      <span style="font-size: 0.8rem; color: #64748b; font-weight: 600;">إجمالي القبض</span>
+      <h3 style="margin: 0.2rem 0 0 0; font-size: 1.3rem; font-weight: 800; color: #0f172a;">{{ "{:,.2f}".format(total_receipts) }} <span style="font-size: 0.8rem; font-weight: normal; color: #64748b;">ر.ي</span></h3>
+    </div>
+  </div>
+
+  <div class="card" style="display: flex; align-items: center; gap: 1rem; margin-bottom: 0;">
+    <div style="width: 48px; height: 48px; background: #fef2f2; color: #dc2626; border-radius: 12px; display: grid; place-items: center; font-size: 1.5rem;">📤</div>
+    <div>
+      <span style="font-size: 0.8rem; color: #64748b; font-weight: 600;">إجمالي الصرف</span>
+      <h3 style="margin: 0.2rem 0 0 0; font-size: 1.3rem; font-weight: 800; color: #0f172a;">{{ "{:,.2f}".format(total_payments) }} <span style="font-size: 0.8rem; font-weight: normal; color: #64748b;">ر.ي</span></h3>
+    </div>
+  </div>
+</div>
+
+<!-- Quick Actions Navigation -->
+<h3 style="font-size: 1rem; font-weight: 700; margin-bottom: 0.85rem; color: #334155;">الوصول السريع</h3>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.85rem; margin-bottom: 1.5rem;">
+  <a href="{{ url_for('members.index') }}" class="card" style="text-decoration: none; color: inherit; margin: 0; padding: 1rem; display: flex; align-items: center; gap: 0.8rem;">
+    <span style="font-size: 1.5rem;">👤</span>
+    <div>
+      <strong style="font-size: 0.9rem; display: block;">دليل المشتركين</strong>
+      <span style="font-size: 0.75rem; color: #64748b;">تسجيل وبحث وملفات</span>
+    </div>
+  </a>
+
+  <a href="{{ url_for('attendance.index') }}" class="card" style="text-decoration: none; color: inherit; margin: 0; padding: 1rem; display: flex; align-items: center; gap: 0.8rem;">
+    <span style="font-size: 1.5rem;">⏱️</span>
+    <div>
+      <strong style="font-size: 0.9rem; display: block;">حضور المشتركين</strong>
+      <span style="font-size: 0.75rem; color: #64748b;">تسجيل دخول فوري</span>
+    </div>
+  </a>
+
+  <a href="{{ url_for('accounting.vouchers') }}" class="card" style="text-decoration: none; color: inherit; margin: 0; padding: 1rem; display: flex; align-items: center; gap: 0.8rem;">
+    <span style="font-size: 1.5rem;">🧾</span>
+    <div>
+      <strong style="font-size: 0.9rem; display: block;">السندات المالية</strong>
+      <span style="font-size: 0.75rem; color: #64748b;">سندات قبض وصرف</span>
+    </div>
+  </a>
+
+  <a href="{{ url_for('accounting.accounts') }}" class="card" style="text-decoration: none; color: inherit; margin: 0; padding: 1rem; display: flex; align-items: center; gap: 0.8rem;">
+    <span style="font-size: 1.5rem;">🌳</span>
+    <div>
+      <strong style="font-size: 0.9rem; display: block;">شجرة الحسابات</strong>
+      <span style="font-size: 0.75rem; color: #64748b;">الدليل المحاسبي</span>
+    </div>
+  </a>
+
+  <a href="{{ url_for('employees.index') }}" class="card" style="text-decoration: none; color: inherit; margin: 0; padding: 1rem; display: flex; align-items: center; gap: 0.8rem;">
+    <span style="font-size: 1.5rem;">👔</span>
+    <div>
+      <strong style="font-size: 0.9rem; display: block;">الموظفون والدوام</strong>
+      <span style="font-size: 0.75rem; color: #64748b;">ملفات وسجل البصمة</span>
+    </div>
+  </a>
+
+  <a href="{{ url_for('employees.payroll') }}" class="card" style="text-decoration: none; color: inherit; margin: 0; padding: 1rem; display: flex; align-items: center; gap: 0.8rem;">
+    <span style="font-size: 1.5rem;">💰</span>
+    <div>
+      <strong style="font-size: 0.9rem; display: block;">مسير الرواتب</strong>
+      <span style="font-size: 0.75rem; color: #64748b;">احتساب وصرف الأجور</span>
+    </div>
+  </a>
+</div>
+
+<!-- Two Columns Tables -->
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem;">
+  <!-- Recent Members -->
+  <div class="card">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+      <h3 style="margin: 0; font-size: 1rem; font-weight: 700;">أحدث المشتركين</h3>
+      <a href="{{ url_for('members.index') }}" class="btn btn-secondary" style="font-size: 0.78rem; padding: 0.3rem 0.6rem;">عرض الكل</a>
+    </div>
+    <div class="table-responsive">
+      <table>
+        <thead>
+          <tr>
+            <th>كود</th>
+            <th>الاسم</th>
+            <th>الهاتف</th>
+            <th>الحالة</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for m in recent_members %}
+          <tr>
+            <td><code>{{ m.member_code }}</code></td>
+            <td><a href="{{ url_for('members.show', member_id=m.id) }}" style="color: #2563eb; text-decoration: none; font-weight: 600;">{{ m.full_name }}</a></td>
+            <td>{{ m.phone }}</td>
+            <td><span class="badge badge-success">{{ m.status }}</span></td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="4" style="text-align: center; color: #94a3b8; padding: 1.5rem;">لا يوجد مشتركون بعد.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Recent Subscriptions -->
+  <div class="card">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+      <h3 style="margin: 0; font-size: 1rem; font-weight: 700;">أحدث الاشتراكات</h3>
+      <a href="{{ url_for('subscriptions.index') }}" class="btn btn-secondary" style="font-size: 0.78rem; padding: 0.3rem 0.6rem;">عرض الكل</a>
+    </div>
+    <div class="table-responsive">
+      <table>
+        <thead>
+          <tr>
+            <th>رقم الاشتراك</th>
+            <th>المشترك</th>
+            <th>الباقة</th>
+            <th>النهاية</th>
+            <th>الحالة</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for s in recent_subs %}
+          <tr>
+            <td><code>{{ s.subscription_code }}</code></td>
+            <td>{{ s.member.full_name }}</td>
+            <td>{{ s.plan.name }}</td>
+            <td>{{ s.end_date }}</td>
+            <td>
+              {% if s.is_active_now %}
+                <span class="badge badge-success">ساري ({{ s.remaining_days }} يوم)</span>
+              {% else %}
+                <span class="badge badge-danger">{{ s.status }}</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="5" style="text-align: center; color: #94a3b8; padding: 1.5rem;">لا توجد اشتراكات بعد.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

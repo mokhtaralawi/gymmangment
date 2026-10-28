@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block title %}سجل التدقيق{% endblock %}
+{% block header_title %}سجل التدقيق والرقابة (Audit Trail){% endblock %}
+
+{% block content %}
+<div class="card">
+  <form method="GET" action="{{ url_for('system.audit') }}" style="display: flex; gap: 0.5rem; max-width: 450px;">
+    <input type="text" name="q" value="{{ q }}" placeholder="بحث بالعملية أو المستخدم أو IP..." class="form-control">
+    <button type="submit" class="btn btn-secondary">بحث</button>
+  </form>
+</div>
+
+<div class="card">
+  <div class="table-responsive">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>الوقت والتاريخ</th>
+          <th>المستخدم</th>
+          <th>نوع العملية</th>
+          <th>الهدف</th>
+          <th>التفاصيل</th>
+          <th>عنوان IP</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for l in logs %}
+        <tr>
+          <td>{{ l.id }}</td>
+          <td>{{ l.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+          <td><strong>{{ l.username }}</strong></td>
+          <td><code>{{ l.action }}</code></td>
+          <td>{{ l.target_type or '-' }} {% if l.target_id %}#{{ l.target_id }}{% endif %}</td>
+          <td>{{ l.details or '-' }}</td>
+          <td><code>{{ l.ip_address }}</code></td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="7" style="text-align: center; color: #94a3b8; padding: 2rem;">لا توجد حركات مسجلة.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

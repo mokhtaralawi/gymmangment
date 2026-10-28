@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#1a56db">
+  <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
+  <title>{% block title %}نادي{% endblock %} · نظام إدارة النادي الرياضي</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/tokens.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/components.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/app-ui.css') }}">
+  <style>
+    /* Clean layout styling enhancements */
+    body { font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f8fafc; color: #1e293b; margin: 0; }
+    .layout-root { display: flex; min-height: 100vh; }
+    .sidebar { width: 260px; background: #ffffff; border-left: 1px solid #e2e8f0; display: flex; flex-direction: column; flex-shrink: 0; }
+    .sidebar-brand { padding: 1.25rem 1.5rem; display: flex; align-items: center; gap: 0.75rem; border-bottom: 1px solid #f1f5f9; text-decoration: none; color: inherit; }
+    .brand-icon { width: 40px; height: 40px; background: #2563eb; color: #fff; border-radius: 10px; display: grid; place-items: center; font-weight: 900; font-size: 1.2rem; }
+    .sidebar-nav { padding: 1rem 0.75rem; flex: 1; overflow-y: auto; }
+    .nav-group-title { font-size: 0.75rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; padding: 0.75rem 0.75rem 0.25rem; }
+    .nav-link { display: flex; align-items: center; gap: 0.75rem; padding: 0.6rem 0.75rem; color: #475569; text-decoration: none; border-radius: 8px; font-weight: 500; font-size: 0.9rem; margin-bottom: 2px; }
+    .nav-link:hover, .nav-link.active { background: #eff6ff; color: #2563eb; font-weight: 600; }
+    .nav-badge-soon { font-size: 0.65rem; background: #f1f5f9; color: #64748b; padding: 2px 6px; border-radius: 6px; margin-right: auto; }
+    .sidebar-user { padding: 1rem 1.25rem; border-top: 1px solid #f1f5f9; display: flex; align-items: center; justify-content: space-between; }
+    .user-info { display: flex; align-items: center; gap: 0.6rem; }
+    .user-avatar { width: 36px; height: 36px; background: #3b82f6; color: #fff; border-radius: 50%; display: grid; place-items: center; font-weight: bold; }
+    .main-wrapper { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+    .topbar { height: 64px; background: #ffffff; border-bottom: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: space-between; padding: 0 1.5rem; }
+    .content-area { padding: 1.5rem; flex: 1; }
+    .card { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1.25rem; margin-bottom: 1.25rem; box-shadow: 0 1px 3px rgba(0,0,0,0.03); }
+    .btn { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; border-radius: 8px; font-weight: 600; font-size: 0.88rem; cursor: pointer; border: 1px solid transparent; text-decoration: none; }
+    .btn-primary { background: #2563eb; color: #fff; }
+    .btn-primary:hover { background: #1d4ed8; }
+    .btn-secondary { background: #f1f5f9; color: #334155; border-color: #cbd5e1; }
+    .btn-secondary:hover { background: #e2e8f0; }
+    .btn-danger { background: #ef4444; color: #fff; }
+    .badge { padding: 0.25rem 0.6rem; border-radius: 6px; font-size: 0.75rem; font-weight: 700; }
+    .badge-success { background: #dcfce7; color: #166534; }
+    .badge-danger { background: #fee2e2; color: #991b1b; }
+    .badge-warning { background: #fef3c7; color: #92400e; }
+    .badge-info { background: #e0f2fe; color: #075985; }
+    .table-responsive { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; text-align: right; }
+    th { background: #f8fafc; color: #475569; font-weight: 700; padding: 0.75rem 1rem; border-bottom: 1px solid #e2e8f0; font-size: 0.85rem; }
+    td { padding: 0.85rem 1rem; border-bottom: 1px solid #f1f5f9; font-size: 0.88rem; vertical-align: middle; }
+    tr:hover td { background: #f8fafc; }
+    .form-control { width: 100%; padding: 0.6rem 0.85rem; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.9rem; box-sizing: border-box; }
+    .form-control:focus { outline: none; border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,0.15); }
+    .form-group { margin-bottom: 1rem; }
+    .form-label { display: block; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.4rem; color: #334155; }
+    .alert { padding: 0.85rem 1.25rem; border-radius: 8px; margin-bottom: 1.25rem; font-size: 0.9rem; }
+    .alert-success { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
+    .alert-danger { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+    .alert-warning { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
+    .alert-info { background: #e0f2fe; color: #075985; border: 1px solid #bae6fd; }
+    .modal-overlay { position: fixed; inset: 0; background: rgba(15,23,42,0.6); display: none; place-items: center; z-index: 100; padding: 1rem; }
+    .modal-overlay.active { display: grid; }
+    .modal-box { background: #fff; width: 100%; max-width: 580px; border-radius: 14px; overflow: hidden; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); }
+    .modal-header { padding: 1rem 1.25rem; border-bottom: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: space-between; font-weight: bold; }
+    .modal-body { padding: 1.25rem; max-height: 80vh; overflow-y: auto; }
+    .modal-footer { padding: 1rem 1.25rem; border-top: 1px solid #e2e8f0; display: flex; justify-content: flex-end; gap: 0.5rem; background: #f8fafc; }
+  </style>
+  {% block extra_head %}{% endblock %}
+</head>
+<body>
+  <div class="layout-root">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <a href="{{ url_for('dashboard.index') }}" class="sidebar-brand">
+        <div class="brand-icon">🏋️</div>
+        <div>
+          <strong style="font-size: 1.15rem; display: block; line-height: 1.2;">نادي</strong>
+          <span style="font-size: 0.75rem; color: #64748b;">إدارة النادي الرياضي</span>
+        </div>
+      </a>
+
+      <div class="sidebar-nav">
+        <div class="nav-group-title">مساحة العمل</div>
+        <a href="{{ url_for('dashboard.index') }}" class="nav-link {% if request.path == '/dashboard/' %}active{% endif %}">
+          <span>📊</span>
+          <span>لوحة التحكم</span>
+        </a>
+
+        <div class="nav-group-title">النادي والمشتركون</div>
+        <a href="{{ url_for('members.index') }}" class="nav-link {% if '/members' in request.path %}active{% endif %}">
+          <span>👥</span>
+          <span>المشتركون</span>
+        </a>
+        <a href="{{ url_for('subscriptions.index') }}" class="nav-link {% if request.path == '/subscriptions/' %}active{% endif %}">
+          <span>💳</span>
+          <span>الاشتراكات</span>
+        </a>
+        <a href="{{ url_for('subscriptions.plans') }}" class="nav-link {% if '/subscriptions/plans' in request.path %}active{% endif %}">
+          <span>📋</span>
+          <span>أنواع الاشتراكات</span>
+        </a>
+        <a href="{{ url_for('attendance.index') }}" class="nav-link {% if '/member-attendance' in request.path %}active{% endif %}">
+          <span>⏱️</span>
+          <span>حضور المشتركين</span>
+        </a>
+
+        <div class="nav-group-title">الموظفون والدوام</div>
+        <a href="{{ url_for('employees.index') }}" class="nav-link {% if request.path == '/employees/' %}active{% endif %}">
+          <span>👔</span>
+          <span>ملفات الموظفين</span>
+        </a>
+        <a href="{{ url_for('employees.attendance') }}" class="nav-link {% if '/employees/attendance' in request.path %}active{% endif %}">
+          <span>🖲️</span>
+          <span>الحضور والانصراف</span>
+        </a>
+        <a href="{{ url_for('employees.payroll') }}" class="nav-link {% if '/employees/payroll' in request.path %}active{% endif %}">
+          <span>💰</span>
+          <span>مسير الرواتب</span>
+        </a>
+
+        <div class="nav-group-title">المالية والحسابات</div>
+        <a href="{{ url_for('accounting.vouchers') }}" class="nav-link {% if '/accounting/vouchers' in request.path %}active{% endif %}">
+          <span>🧾</span>
+          <span>السندات (قبض وصرف)</span>
+        </a>
+        <a href="{{ url_for('accounting.accounts') }}" class="nav-link {% if '/accounting/accounts' in request.path %}active{% endif %}">
+          <span>🌳</span>
+          <span>شجرة الحسابات</span>
+        </a>
+        <a href="{{ url_for('accounting.journal') }}" class="nav-link {% if '/accounting/journal' in request.path %}active{% endif %}">
+          <span>📖</span>
+          <span>القيود اليومية</span>
+        </a>
+        <a href="{{ url_for('accounting.ledger') }}" class="nav-link {% if '/accounting/ledger' in request.path %}active{% endif %}">
+          <span>📑</span>
+          <span>دفتر الأستاذ (كشف حساب)</span>
+        </a>
+
+        <div class="nav-group-title">إدارة النظام</div>
+        <a href="{{ url_for('notifications.index') }}" class="nav-link {% if request.path == '/notifications/' %}active{% endif %}">
+          <span>🔔</span>
+          <span>مركز الإشعارات</span>
+        </a>
+        <a href="{{ url_for('notifications.rules') }}" class="nav-link {% if '/notifications/rules' in request.path %}active{% endif %}">
+          <span>⚙️</span>
+          <span>قواعد التنبيه</span>
+        </a>
+        <a href="{{ url_for('auth.users') }}" class="nav-link {% if '/auth/users' in request.path %}active{% endif %}">
+          <span>🛡️</span>
+          <span>المستخدمون والصلاحيات</span>
+        </a>
+        <a href="{{ url_for('system.audit') }}" class="nav-link {% if '/system/audit' in request.path %}active{% endif %}">
+          <span>📜</span>
+          <span>سجل التدقيق</span>
+        </a>
+        <a href="{{ url_for('system.backup') }}" class="nav-link {% if '/system/backup' in request.path %}active{% endif %}">
+          <span>💾</span>
+          <span>النسخ الاحتياطي</span>
+        </a>
+        <a href="{{ url_for('auth.profile') }}" class="nav-link {% if '/auth/profile' in request.path %}active{% endif %}">
+          <span>👤</span>
+          <span>حسابي وأمان الدخول</span>
+        </a>
+      </div>
+
+      <div class="sidebar-user">
+        <div class="user-info">
+          <div class="user-avatar">{{ current_user.full_name[0] if current_user.is_authenticated else 'م' }}</div>
+          <div>
+            <strong style="font-size: 0.85rem; display: block;">{{ current_user.full_name if current_user.is_authenticated else 'مستخدم' }}</strong>
+            <span style="font-size: 0.72rem; color: #64748b;">{{ current_user.role_name if current_user.is_authenticated else 'مدير النظام' }}</span>
+          </div>
+        </div>
+        <form method="POST" action="{{ url_for('auth.logout') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" title="تسجيل الخروج" style="background: none; border: none; cursor: pointer; color: #94a3b8; font-size: 1.1rem; padding: 4px;">
+            🚪
+          </button>
+        </form>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <div class="main-wrapper">
+      <header class="topbar">
+        <div>
+          <h1 style="font-size: 1.15rem; margin: 0; font-weight: 800;">{% block header_title %}نظام إدارة النادي الرياضي{% endblock %}</h1>
+        </div>
+        <div style="display: flex; align-items: center; gap: 0.75rem;">
+          <a href="{{ url_for('attendance.index') }}" class="btn btn-secondary" style="font-size: 0.8rem; padding: 0.35rem 0.75rem;">
+            ⏱️ تسجيل حضور فوري
+          </a>
+          <a href="{{ url_for('notifications.index') }}" title="الإشعارات" style="text-decoration: none; font-size: 1.2rem; position: relative;">
+            🔔
+          </a>
+        </div>
+      </header>
+
+      <main class="content-area">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <div class="alert alert-{{ category }}">{{ message }}</div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+      </main>
+    </div>
+  </div>
+
+  <script>
+    function openModal(id) {
+      const m = document.getElementById(id);
+      if (m) m.classList.add('active');
+    }
+    function closeModal(id) {
+      const m = document.getElementById(id);
+      if (m) m.classList.remove('active');
+    }
+  </script>
+  {% block extra_scripts %}{% endblock %}
+</body>
+</html>

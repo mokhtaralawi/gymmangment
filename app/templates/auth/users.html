@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+
+{% block title %}المستخدمون والصلاحيات{% endblock %}
+{% block header_title %}إدارة المستخدمين والصلاحيات{% endblock %}
+
+{% block content %}
+<div class="card" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+  <form method="GET" action="{{ url_for('auth.users') }}" style="display: flex; gap: 0.5rem; flex: 1; max-width: 400px;">
+    <input type="text" name="q" value="{{ q }}" placeholder="بحث بالاسم أو اسم المستخدم..." class="form-control">
+    <button type="submit" class="btn btn-secondary">بحث</button>
+  </form>
+
+  <button type="button" class="btn btn-primary" onclick="openModal('addUserModal')">
+    ➕ إضافة مستخدم جديد
+  </button>
+</div>
+
+<div class="card">
+  <div class="table-responsive">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>الاسم الكامل</th>
+          <th>اسم المستخدم</th>
+          <th>الدور / الصلاحية</th>
+          <th>تاريخ الإنشاء</th>
+          <th>الحالة</th>
+          <th>إجراءات</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for u in users %}
+        <tr>
+          <td>{{ u.id }}</td>
+          <td><strong>{{ u.full_name }}</strong></td>
+          <td><code>@{{ u.username }}</code></td>
+          <td><span class="badge badge-info">{{ u.role_name }}</span></td>
+          <td>{{ u.created_at.strftime('%Y-%m-%d') }}</td>
+          <td>
+            {% if u.is_active %}
+              <span class="badge badge-success">نشط</span>
+            {% else %}
+              <span class="badge badge-danger">معطل</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if u.id == current_user.id %}
+              <span style="font-size: 0.78rem; color: #64748b;">(حسابك الحالي)</span>
+            {% else %}
+            <form method="POST" action="{{ url_for('auth.toggle_user_active', user_id=u.id) }}" style="display: inline;">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button type="submit" class="btn btn-secondary" style="font-size: 0.72rem; padding: 0.2rem 0.5rem;">
+                {% if u.is_active %}إيقاف الحساب{% else %}تفعيل الحساب{% endif %}
+              </button>
+            </form>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Modal Add User -->
+<div class="modal-overlay" id="addUserModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <span>إضافة مستخدم جديد</span>
+      <button type="button" onclick="closeModal('addUserModal')" style="background: none; border: none; font-size: 1.2rem; cursor: pointer;">✕</button>
+    </div>
+    <form method="POST" action="{{ url_for('auth.users') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">الاسم الكامل *</label>
+          <input type="text" name="full_name" class="form-control" required placeholder="مثال: محمد أحمد">
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+          <div class="form-group">
+            <label class="form-label">اسم المستخدم *</label>
+            <input type="text" name="username" class="form-control" required placeholder="user123">
+          </div>
+          <div class="form-group">
+            <label class="form-label">الدور / الصلاحية</label>
+            <select name="role_id" class="form-control">
+              <option value="مدير النظام">مدير النظام</option>
+              <option value="موظف استقبال">موظف استقبال</option>
+              <option value="محاسب">محاسب</option>
+            </select>
+          </div>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+          <div class="form-group">
+            <label class="form-label">كلمة المرور *</label>
+            <input type="password" name="password" class="form-control" required minlength="6">
+          </div>
+          <div class="form-group">
+            <label class="form-label">تأكيد كلمة المرور *</label>
+            <input type="password" name="confirm_password" class="form-control" required minlength="6">
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeModal('addUserModal')">إلغاء</button>
+        <button type="submit" class="btn btn-primary">حفظ المستخدم</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

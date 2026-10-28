@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block title %}القيود اليومية{% endblock %}
+{% block header_title %}القيود اليومية المحاسبية{% endblock %}
+
+{% block content %}
+<div class="card" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+  <form method="GET" action="{{ url_for('accounting.journal') }}" style="display: flex; gap: 0.5rem; flex: 1; max-width: 400px;">
+    <input type="text" name="q" value="{{ q }}" placeholder="بحث برقم القيد أو البيان..." class="form-control">
+    <button type="submit" class="btn btn-secondary">بحث</button>
+  </form>
+  <div style="display: flex; gap: 0.5rem;">
+    <a href="{{ url_for('accounting.vouchers') }}" class="btn btn-secondary">🧾 السندات</a>
+    <a href="{{ url_for('accounting.ledger') }}" class="btn btn-secondary">📑 دفتر الأستاذ</a>
+  </div>
+</div>
+
+<div class="card">
+  {% for entry in entries %}
+  <div style="border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 1.25rem; overflow: hidden;">
+    <div style="background: #f8fafc; padding: 0.75rem 1rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0;">
+      <div>
+        <strong>قيد رقم: <code>{{ entry.entry_number }}</code></strong>
+        <span style="margin-right: 1rem; color: #64748b; font-size: 0.85rem;">{{ entry.entry_date }}</span>
+      </div>
+      <span style="font-size: 0.88rem; color: #334155;">{{ entry.description or '' }}</span>
+    </div>
+    <table style="margin: 0;">
+      <thead>
+        <tr style="background: #ffffff;">
+          <th>الحساب</th>
+          <th style="width: 140px;">مدين (+)</th>
+          <th style="width: 140px;">دائن (-)</th>
+          <th>البيان</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for line in entry.lines %}
+        <tr>
+          <td>{{ line.account.code }} - {{ line.account.name }}</td>
+          <td style="color: #16a34a; font-weight: bold;">{% if line.debit > 0 %}{{ "{:,.2f}".format(line.debit) }}{% else %}-{% endif %}</td>
+          <td style="color: #dc2626; font-weight: bold;">{% if line.credit > 0 %}{{ "{:,.2f}".format(line.credit) }}{% else %}-{% endif %}</td>
+          <td>{{ line.description or '-' }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div style="text-align: center; color: #94a3b8; padding: 3rem;">
+    لا توجد قيود يومية مسجلة بعد.
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

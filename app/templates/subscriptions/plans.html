@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+
+{% block title %}أنواع الاشتراكات{% endblock %}
+{% block header_title %}باقات وأنواع الاشتراكات{% endblock %}
+
+{% block content %}
+<div class="card" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+  <form method="GET" action="{{ url_for('subscriptions.plans') }}" style="display: flex; gap: 0.5rem; flex: 1; max-width: 400px;">
+    <input type="text" name="q" value="{{ q }}" placeholder="بحث عن باقة..." class="form-control">
+    <button type="submit" class="btn btn-secondary">بحث</button>
+  </form>
+
+  <button type="button" class="btn btn-primary" onclick="openModal('addPlanModal')">
+    ➕ إضافة باقة جديدة
+  </button>
+</div>
+
+<!-- Plans Grid -->
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.25rem;">
+  {% for p in plans %}
+  <div class="card" style="display: flex; flex-direction: column; justify-content: space-between; border-top: 4px solid {% if p.is_active %}#2563eb{% else %}#94a3b8{% endif %};">
+    <div>
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.75rem;">
+        <div>
+          <h3 style="margin: 0; font-size: 1.2rem; color: #0f172a;">{{ p.name }}</h3>
+          <code style="font-size: 0.75rem; color: #64748b;">{{ p.plan_code }}</code>
+        </div>
+        <div>
+          {% if p.is_active %}
+            <span class="badge badge-success">مفعّل</span>
+          {% else %}
+            <span class="badge badge-danger">معطل</span>
+          {% endif %}
+        </div>
+      </div>
+
+      <div style="margin: 1.25rem 0;">
+        <span style="font-size: 1.8rem; font-weight: 900; color: #2563eb;">{{ "{:,.2f}".format(p.price) }}</span>
+        <span style="font-size: 0.85rem; color: #64748b;">ر.ي</span>
+        <div style="margin-top: 0.4rem; font-size: 0.88rem; color: #475569;">
+          المدة: <strong>{{ p.duration_days }}</strong> يوم
+        </div>
+      </div>
+
+      {% if p.description %}
+      <p style="font-size: 0.85rem; color: #64748b; line-height: 1.5; margin: 0 0 1rem 0;">
+        {{ p.description }}
+      </p>
+      {% endif %}
+    </div>
+
+    <div style="padding-top: 1rem; border-top: 1px solid #f1f5f9; display: flex; justify-content: flex-end; gap: 0.5rem;">
+      <form method="POST" action="{{ url_for('subscriptions.toggle_plan', plan_id=p.id) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit" class="btn btn-secondary" style="font-size: 0.78rem; padding: 0.35rem 0.65rem;">
+          {% if p.is_active %}تعطيل الباقة{% else %}تفعيل الباقة{% endif %}
+        </button>
+      </form>
+    </div>
+  </div>
+  {% else %}
+  <div class="card" style="grid-column: 1 / -1; text-align: center; color: #94a3b8; padding: 3rem;">
+    لا توجد باقات اشتراك مضافة حتى الآن.
+  </div>
+  {% endfor %}
+</div>
+
+<!-- Modal Add Plan -->
+<div class="modal-overlay" id="addPlanModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <span>إضافة نوع اشتراك جديد</span>
+      <button type="button" onclick="closeModal('addPlanModal')" style="background: none; border: none; font-size: 1.2rem; cursor: pointer;">✕</button>
+    </div>
+    <form method="POST" action="{{ url_for('subscriptions.plans') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">اسم الباقة *</label>
+          <input type="text" name="name" class="form-control" required placeholder="مثال: شهري، نصف سنوي، خاص">
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+          <div class="form-group">
+            <label class="form-label">المدة بالأيام *</label>
+            <input type="number" name="duration_days" class="form-control" value="30" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">السعر المرجعي (ر.ي) *</label>
+            <input type="number" step="any" name="price" class="form-control" value="5000" required>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">الوصف والمميزات</label>
+          <textarea name="description" class="form-control" rows="3" placeholder="ملاحظات ومميزات الباقة..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeModal('addPlanModal')">إلغاء</button>
+        <button type="submit" class="btn btn-primary">حفظ الباقة</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

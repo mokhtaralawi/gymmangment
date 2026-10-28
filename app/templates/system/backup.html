@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block title %}النسخ الاحتياطي{% endblock %}
+{% block header_title %}النسخ الاحتياطي واستعادة البيانات{% endblock %}
+
+{% block content %}
+<div class="card" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+  <div>
+    <h3 style="margin: 0 0 0.25rem 0; font-size: 1.1rem;">إدارة النسخ الاحتياطية</h3>
+    <p style="margin: 0; font-size: 0.85rem; color: #64748b;">قم بإنشاء وتنزيل نسخ دورية لقاعدة بيانات النادي لحماية بياناتك من أي فقدان.</p>
+  </div>
+  <form method="POST" action="{{ url_for('system.create_backup') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <button type="submit" class="btn btn-primary">💾 إنشاء نسخة احتياطية الآن</button>
+  </form>
+</div>
+
+<div class="card">
+  <div class="table-responsive">
+    <table>
+      <thead>
+        <tr>
+          <th>اسم الملف</th>
+          <th>تاريخ ووقت الإنشاء</th>
+          <th>حجم الملف</th>
+          <th>إجراءات</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for b in backups %}
+        <tr>
+          <td><code>{{ b.filename }}</code></td>
+          <td>{{ b.date }}</td>
+          <td>{{ b.size }}</td>
+          <td>
+            <a href="{{ url_for('system.download_backup', filename=b.filename) }}" class="btn btn-secondary" style="font-size: 0.75rem; padding: 0.25rem 0.6rem;">⬇️ تحميل النسخة</a>
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="4" style="text-align: center; color: #94a3b8; padding: 2.5rem;">
+            لا توجد نسخ احتياطية محفوظة حتى الآن. انقر على زر "إنشاء نسخة احتياطية الآن" لإنشاء أول نسخة.
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

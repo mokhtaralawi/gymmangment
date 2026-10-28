@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block title %}قواعد التنبيه{% endblock %}
+{% block header_title %}إعدادات قواعد التنبيه{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width: 600px;">
+  <h3 style="margin: 0 0 1rem 0; font-size: 1.1rem;">قواعد انتهاء الاشتراك</h3>
+  <p style="font-size: 0.88rem; color: #64748b; line-height: 1.6; margin-bottom: 1.5rem;">
+    يقوم النظام تلقائياً بفحص تاريخ انتهاء اشتراكات الأعضاء وإصدار تنبيهات في لوحة التحكم ومركز الإشعارات بناءً على المعايير المحددة أدناه.
+  </p>
+
+  <form method="POST" action="{{ url_for('notifications.rules') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+    <div class="form-group">
+      <label class="form-label">التنبيه قبل الانتهاء (بالأيام)</label>
+      <input type="number" name="days_before" class="form-control" value="{{ rule.days_before }}" required>
+      <small style="color: #94a3b8; font-size: 0.78rem;">يُنشأ إشعار خلال هذه المدة قبل تاريخ نهاية الاشتراك (افتراضياً 7 أيام).</small>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">مهلة اكتشاف الانتهاء (بالأيام)</label>
+      <input type="number" name="days_after" class="form-control" value="{{ rule.days_after }}" required>
+      <small style="color: #94a3b8; font-size: 0.78rem;">تظل فترة اكتشاف الاشتراك المنتهي مفتوحة لهذه المدة بعد النهاية.</small>
+    </div>
+
+    <div class="form-group" style="margin-top: 1.25rem;">
+      <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; cursor: pointer;">
+        <input type="checkbox" name="is_enabled" value="1" {% if rule.is_enabled %}checked{% endif %}>
+        <strong>تفعيل الفحص والتنبيه التلقائي</strong>
+      </label>
+    </div>
+
+    <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid #f1f5f9;">
+      <button type="submit" class="btn btn-primary">حفظ الإعدادات</button>
+      <a href="{{ url_for('notifications.index') }}" class="btn btn-secondary">إلغاء</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

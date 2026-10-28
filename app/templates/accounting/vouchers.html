@@ -1,0 +1,150 @@
+{% extends "base.html" %}
+
+{% block title %}السندات المالية{% endblock %}
+{% block header_title %}السندات والمحاسبة المالية{% endblock %}
+
+{% block content %}
+<!-- Top Summary Cards -->
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.25rem;">
+  <div class="card" style="margin: 0;">
+    <span style="font-size: 0.8rem; color: #64748b;">إجمالي السندات</span>
+    <h3 style="margin: 0.25rem 0 0 0; font-size: 1.4rem;">{{ vouchers|length }}</h3>
+  </div>
+  <div class="card" style="margin: 0;">
+    <span style="font-size: 0.8rem; color: #16a34a;">إجمالي المقبوضات</span>
+    <h3 style="margin: 0.25rem 0 0 0; font-size: 1.4rem; color: #16a34a;">{{ "{:,.2f}".format(total_receipts) }} <span style="font-size: 0.8rem; font-weight: normal;">ر.ي</span></h3>
+  </div>
+  <div class="card" style="margin: 0;">
+    <span style="font-size: 0.8rem; color: #dc2626;">إجمالي المدفوعات (الصرف)</span>
+    <h3 style="margin: 0.25rem 0 0 0; font-size: 1.4rem; color: #dc2626;">{{ "{:,.2f}".format(total_payments) }} <span style="font-size: 0.8rem; font-weight: normal;">ر.ي</span></h3>
+  </div>
+</div>
+
+<div class="card" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+  <form method="GET" action="{{ url_for('accounting.vouchers') }}" style="display: flex; gap: 0.5rem; flex: 1; max-width: 480px;">
+    <input type="text" name="q" value="{{ q }}" placeholder="بحث برقم السند أو البيان..." class="form-control">
+    <select name="type" class="form-control" style="max-width: 130px;">
+      <option value="">كل الأنواع</option>
+      <option value="قبض" {% if type == 'قبض' %}selected{% endif %}>سند قبض</option>
+      <option value="صرف" {% if type == 'صرف' %}selected{% endif %}>سند صرف</option>
+    </select>
+    <button type="submit" class="btn btn-secondary">تصفية</button>
+  </form>
+
+  <div style="display: flex; gap: 0.5rem;">
+    <button type="button" class="btn btn-primary" onclick="openNewVoucherModal('قبض')">📥 سند قبض جديد</button>
+    <button type="button" class="btn btn-danger" onclick="openNewVoucherModal('صرف')">📤 سند صرف جديد</button>
+  </div>
+</div>
+
+<div class="card">
+  <div class="table-responsive">
+    <table>
+      <thead>
+        <tr>
+          <th>رقم السند</th>
+          <th>النوع</th>
+          <th>التاريخ</th>
+          <th>المبلغ</th>
+          <th>الصندوق / البنك</th>
+          <th>الحساب المقابل</th>
+          <th>البيان</th>
+          <th>الحالة</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for v in vouchers %}
+        <tr>
+          <td><code>{{ v.voucher_number }}</code></td>
+          <td>
+            {% if v.voucher_type == 'قبض' %}
+              <span class="badge badge-success">سند قبض</span>
+            {% else %}
+              <span class="badge badge-danger">سند صرف</span>
+            {% endif %}
+          </td>
+          <td>{{ v.voucher_date }}</td>
+          <td><strong>{{ "{:,.2f}".format(v.amount) }} ر.ي</strong></td>
+          <td>{{ v.account.name }}</td>
+          <td>{{ v.contra_account.name }}</td>
+          <td>{{ v.description or '-' }}</td>
+          <td><span class="badge badge-info">{{ v.status }}</span></td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="8" style="text-align: center; color: #94a3b8; padding: 2rem;">لا توجد سندات مسجلة.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Modal Create Voucher -->
+<div class="modal-overlay" id="voucherModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <span id="vModalTitle">إنشاء سند مالي</span>
+      <button type="button" onclick="closeModal('voucherModal')" style="background: none; border: none; font-size: 1.2rem; cursor: pointer;">✕</button>
+    </div>
+    <form method="POST" action="{{ url_for('accounting.vouchers') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="voucher_type" id="vTypeInput" value="قبض">
+      <div class="modal-body">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+          <div class="form-group">
+            <label class="form-label">المبلغ (ر.ي) *</label>
+            <input type="number" step="any" name="amount" class="form-control" required placeholder="0.00">
+          </div>
+          <div class="form-group">
+            <label class="form-label">تاريخ السند</label>
+            <input type="date" name="voucher_date" class="form-control">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label" id="vAccountLabel">حساب الصندوق / البنك *</label>
+          <select name="account_id" class="form-control" required>
+            {% for a in cash_accounts %}
+            <option value="{{ a.id }}">{{ a.code }} - {{ a.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label" id="vContraLabel">الحساب المستفيد / المقابل *</label>
+          <select name="contra_account_id" class="form-control" required>
+            {% for a in postable_accounts %}
+            <option value="{{ a.id }}">{{ a.code }} - {{ a.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">البيان والشرح</label>
+          <textarea name="description" class="form-control" rows="2" placeholder="تفاصيل سبب القبض أو الصرف..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeModal('voucherModal')">إلغاء</button>
+        <button type="submit" class="btn btn-primary" id="vSubmitBtn">حفظ وترحيل السند</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  function openNewVoucherModal(type) {
+    document.getElementById('vTypeInput').value = type;
+    if (type === 'قبض') {
+      document.getElementById('vModalTitle').innerText = 'إنشاء سند قبض جديد';
+      document.getElementById('vAccountLabel').innerText = 'الصندوق / البنك المستلم (مدين)';
+      document.getElementById('vContraLabel').innerText = 'حساب الإيراد / المشترك (دائن)';
+      document.getElementById('vSubmitBtn').className = 'btn btn-primary';
+    } else {
+      document.getElementById('vModalTitle').innerText = 'إنشاء سند صرف جديد';
+      document.getElementById('vAccountLabel').innerText = 'الصندوق / البنك الدافع (دائن)';
+      document.getElementById('vContraLabel').innerText = 'حساب المصروف / المستفيد (مدين)';
+      document.getElementById('vSubmitBtn').className = 'btn btn-danger';
+    }
+    openModal('voucherModal');
+  }
+</script>
+{% endblock %}

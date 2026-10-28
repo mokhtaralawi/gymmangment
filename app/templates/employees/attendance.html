@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+
+{% block title %}حضور وانصراف الموظفين{% endblock %}
+{% block header_title %}حضور وانصراف الموظفين والمدربين{% endblock %}
+
+{% block content %}
+<div class="card" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+  <form method="GET" action="{{ url_for('employees.attendance') }}" style="display: flex; gap: 0.5rem; flex: 1; max-width: 400px;">
+    <input type="text" name="q" value="{{ q }}" placeholder="بحث باسم الموظف..." class="form-control">
+    <button type="submit" class="btn btn-secondary">بحث</button>
+  </form>
+
+  <div style="display: flex; gap: 0.5rem;">
+    <button type="button" class="btn btn-secondary" onclick="openModal('importCsvModal')">📁 استيراد CSV من البصمة</button>
+    <button type="button" class="btn btn-primary" onclick="openModal('recordAttendanceModal')">➕ تسجيل حركة يدوية</button>
+  </div>
+</div>
+
+<div class="card">
+  <div class="table-responsive">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>اسم الموظف</th>
+          <th>المسمى الوظيفي</th>
+          <th>الوقت والتاريخ</th>
+          <th>نوع الحركة</th>
+          <th>ملاحظات</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in records %}
+        <tr>
+          <td>{{ r.id }}</td>
+          <td><strong>{{ r.employee.full_name }}</strong></td>
+          <td>{{ r.employee.job_title }}</td>
+          <td>{{ r.check_time.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+          <td>
+            {% if r.direction == 'حضور' %}
+              <span class="badge badge-success">🟢 حضور</span>
+            {% else %}
+              <span class="badge badge-warning">🔴 انصراف</span>
+            {% endif %}
+          </td>
+          <td>{{ r.note or '-' }}</td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="6" style="text-align: center; color: #94a3b8; padding: 2rem;">لا توجد حركات حضور وانصراف مسجلة.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Modal Record Attendance -->
+<div class="modal-overlay" id="recordAttendanceModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <span>تسجيل حركة حضور أو انصراف</span>
+      <button type="button" onclick="closeModal('recordAttendanceModal')" style="background: none; border: none; font-size: 1.2rem; cursor: pointer;">✕</button>
+    </div>
+    <form method="POST" action="{{ url_for('employees.attendance') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">الموظف *</label>
+          <select name="employee_id" class="form-control" required>
+            {% for e in employees %}
+            <option value="{{ e.id }}">{{ e.full_name }} ({{ e.job_title }})</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">نوع الحركة *</label>
+          <select name="direction" class="form-control" required>
+            <option value="حضور">حضور</option>
+            <option value="انصراف">انصراف</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">ملاحظة</label>
+          <input type="text" name="note" class="form-control" placeholder="اختياري">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeModal('recordAttendanceModal')">إلغاء</button>
+        <button type="submit" class="btn btn-primary">حفظ الحركة</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal Import CSV -->
+<div class="modal-overlay" id="importCsvModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <span>استيراد ملف حركات البصمة (CSV)</span>
+      <button type="button" onclick="closeModal('importCsvModal')" style="background: none; border: none; font-size: 1.2rem; cursor: pointer;">✕</button>
+    </div>
+    <form method="POST" action="{{ url_for('employees.import_attendance') }}" enctype="multipart/form-data">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="modal-body">
+        <p style="font-size: 0.85rem; color: #64748b; margin-top: 0;">
+          يقبل النظام ملفات CSV المصدرة من أجهزة البصمة بتنسيق الأعمدة:<br>
+          <code>[كود الموظف في الجهاز, تاريخ ووقت الحركة (YYYY-MM-DD HH:MM:SS), نوع الحركة]</code>
+        </p>
+        <div class="form-group">
+          <label class="form-label">اختر ملف CSV *</label>
+          <input type="file" name="file" accept=".csv" class="form-control" required>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeModal('importCsvModal')">إلغاء</button>
+        <button type="submit" class="btn btn-primary">بدء الاستيراد</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+
+{% block title %}دفتر الأستاذ العام{% endblock %}
+{% block header_title %}دفتر الأستاذ (كشف حساب مالي){% endblock %}
+
+{% block content %}
+<div class="card">
+  <form method="GET" action="{{ url_for('accounting.ledger') }}" style="display: flex; gap: 1rem; align-items: flex-end; flex-wrap: wrap;">
+    <div style="flex: 1; min-width: 250px;">
+      <label class="form-label">اختر الحساب المحاسبي *</label>
+      <select name="account_id" class="form-control" required onchange="this.form.submit()">
+        <option value="">-- حدد الحساب لعرض كشف الحساب --</option>
+        {% for a in accounts %}
+        <option value="{{ a.id }}" {% if selected_account and selected_account.id == a.id %}selected{% endif %}>{{ a.code }} - {{ a.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <button type="submit" class="btn btn-primary">عرض كشف الحساب</button>
+  </form>
+</div>
+
+{% if selected_account %}
+<div class="card">
+  <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; padding-bottom: 1rem; margin-bottom: 1rem;">
+    <div>
+      <h3 style="margin: 0; font-size: 1.15rem;">كشف حساب: {{ selected_account.code }} - {{ selected_account.name }}</h3>
+      <span style="font-size: 0.82rem; color: #64748b;">النوع: {{ selected_account.node_type }}</span>
+    </div>
+    <div>
+      <span style="font-size: 0.88rem; color: #64748b;">الرصيد الصافي: </span>
+      <strong style="font-size: 1.2rem; color: {% if net_balance >= 0 %}#16a34a{% else %}#dc2626{% endif %};">
+        {{ "{:,.2f}".format(net_balance) }} ر.ي
+      </strong>
+    </div>
+  </div>
+
+  <div class="table-responsive">
+    <table>
+      <thead>
+        <tr>
+          <th>التاريخ</th>
+          <th>رقم القيد</th>
+          <th>البيان والشرح</th>
+          <th>مدين (+)</th>
+          <th>دائن (-)</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for l in lines %}
+        <tr>
+          <td>{{ l.entry.entry_date }}</td>
+          <td><code>{{ l.entry.entry_number }}</code></td>
+          <td>{{ l.description or l.entry.description or '-' }}</td>
+          <td style="color: #16a34a; font-weight: bold;">{% if l.debit > 0 %}{{ "{:,.2f}".format(l.debit) }}{% else %}-{% endif %}</td>
+          <td style="color: #dc2626; font-weight: bold;">{% if l.credit > 0 %}{{ "{:,.2f}".format(l.credit) }}{% else %}-{% endif %}</td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="5" style="text-align: center; color: #94a3b8; padding: 2rem;">لا توجد حركات مسجلة على هذا الحساب.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+      <tfoot>
+        <tr style="background: #f8fafc; font-weight: bold;">
+          <td colspan="3">الإجمالي:</td>
+          <td style="color: #16a34a;">{{ "{:,.2f}".format(total_debit) }}</td>
+          <td style="color: #dc2626;">{{ "{:,.2f}".format(total_credit) }}</td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

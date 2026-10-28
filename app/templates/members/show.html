@@ -1,0 +1,222 @@
+{% extends "base.html" %}
+
+{% block title %}ملف {{ member.full_name }}{% endblock %}
+{% block header_title %}ملف المشترك: {{ member.full_name }}{% endblock %}
+
+{% block content %}
+<div style="display: flex; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap;">
+  <a href="{{ url_for('members.index') }}" class="btn btn-secondary">← العودة لقائمة المشتركين</a>
+  <button type="button" class="btn btn-primary" onclick="openModal('newSubModal')">➕ إنشاء اشتراك جديد</button>
+  <button type="button" class="btn btn-secondary" onclick="openModal('editMemberModal')">✏️ تعديل الملف</button>
+</div>
+
+<!-- Member Info Grid -->
+<div style="display: grid; grid-template-columns: 1fr 2fr; gap: 1.25rem;">
+  <!-- Profile Summary Card -->
+  <div class="card">
+    <div style="text-align: center; padding-bottom: 1rem; border-bottom: 1px solid #f1f5f9; margin-bottom: 1rem;">
+      <div style="width: 70px; height: 70px; background: #3b82f6; color: #fff; border-radius: 50%; display: grid; place-items: center; font-size: 1.8rem; font-weight: bold; margin: 0 auto 0.75rem auto;">
+        {{ member.full_name[0] }}
+      </div>
+      <h3 style="margin: 0; font-size: 1.2rem; color: #0f172a;">{{ member.full_name }}</h3>
+      <code style="font-size: 0.85rem; color: #64748b;">{{ member.member_code }}</code>
+      <div style="margin-top: 0.5rem;">
+        <span class="badge badge-success">{{ member.status }}</span>
+      </div>
+    </div>
+
+    <div style="font-size: 0.88rem; line-height: 1.8;">
+      <div><strong style="color: #64748b;">رقم الهاتف:</strong> {{ member.phone }}</div>
+      <div><strong style="color: #64748b;">الجنس:</strong> {{ member.gender }}</div>
+      <div><strong style="color: #64748b;">تاريخ الميلاد:</strong> {{ member.birth_date or 'غير مسجل' }}</div>
+      <div><strong style="color: #64748b;">العنوان:</strong> {{ member.address }}</div>
+      <div><strong style="color: #64748b;">طوارئ:</strong> {{ member.emergency_contact_name }} ({{ member.emergency_contact_phone }})</div>
+      <div><strong style="color: #64748b;">تاريخ التسجيل:</strong> {{ member.created_at.strftime('%Y-%m-%d') }}</div>
+      {% if member.notes %}
+      <div style="margin-top: 0.5rem; background: #f8fafc; padding: 0.5rem; border-radius: 6px;">
+        <strong style="color: #64748b; display: block;">ملاحظات:</strong> {{ member.notes }}
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Subscriptions & Attendances Tabs -->
+  <div>
+    <!-- Subscriptions List -->
+    <div class="card">
+      <h3 style="margin: 0 0 1rem 0; font-size: 1rem; font-weight: 700;">سجل الاشتراكات</h3>
+      <div class="table-responsive">
+        <table>
+          <thead>
+            <tr>
+              <th>كود الاشتراك</th>
+              <th>الباقة</th>
+              <th>البدء</th>
+              <th>الانتهاء</th>
+              <th>المبلغ المدفوع</th>
+              <th>الحالة</th>
+              <th>إجراءات</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for s in member.subscriptions %}
+            <tr>
+              <td><code>{{ s.subscription_code }}</code></td>
+              <td><strong>{{ s.plan.name }}</strong></td>
+              <td>{{ s.start_date }}</td>
+              <td>{{ s.end_date }}</td>
+              <td>{{ s.price_paid }} ر.ي</td>
+              <td>
+                {% if s.is_active_now %}
+                  <span class="badge badge-success">ساري (متبقي {{ s.remaining_days }} يوم)</span>
+                {% elif s.status == 'ملغي' %}
+                  <span class="badge badge-danger">ملغي</span>
+                {% else %}
+                  <span class="badge badge-warning">منتهي</span>
+                {% endif %}
+              </td>
+              <td>
+                {% if s.status == 'ساري' %}
+                <form method="POST" action="{{ url_for('subscriptions.cancel', sub_id=s.id) }}" style="display: inline;" onsubmit="return confirm('هل أنت متأكد من إلغاء الاشتراك؟');">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <input type="hidden" name="reason" value="إلغاء بطلب المشترك">
+                  <button type="submit" class="btn btn-secondary" style="font-size: 0.72rem; padding: 0.2rem 0.5rem; color: #dc2626;">إلغاء</button>
+                </form>
+                {% endif %}
+              </td>
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="7" style="text-align: center; color: #94a3b8; padding: 1.5rem;">لا توجد اشتراكات سابقة لهذا المشترك.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Attendance History -->
+    <div class="card">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <h3 style="margin: 0; font-size: 1rem; font-weight: 700;">سجل الزيارات والحضور ({{ member.attendances|length }})</h3>
+      </div>
+      <div class="table-responsive">
+        <table>
+          <thead>
+            <tr>
+              <th>تاريخ ووقت الزيارة</th>
+              <th>ملاحظات</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for a in member.attendances %}
+            <tr>
+              <td>{{ a.check_in_time.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+              <td>{{ a.note or '-' }}</td>
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="2" style="text-align: center; color: #94a3b8; padding: 1.5rem;">لم يسجل المشترك أي زيارة بعد.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- New Subscription Modal -->
+<div class="modal-overlay" id="newSubModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <span>إنشاء اشتراك جديد لـ: {{ member.full_name }}</span>
+      <button type="button" onclick="closeModal('newSubModal')" style="background: none; border: none; font-size: 1.2rem; cursor: pointer;">✕</button>
+    </div>
+    <form method="POST" action="{{ url_for('subscriptions.index') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="member_id" value="{{ member.id }}">
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">نوع الباقة *</label>
+          <select name="plan_id" class="form-control" required>
+            {% for p in plans %}
+            <option value="{{ p.id }}">{{ p.name }} ({{ p.duration_days }} يوم - {{ p.price }} ر.ي)</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">تاريخ البدء *</label>
+          <input type="date" name="start_date" class="form-control" value="{{ date_today }}" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">ملاحظات</label>
+          <textarea name="notes" class="form-control" rows="2"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeModal('newSubModal')">إلغاء</button>
+        <button type="submit" class="btn btn-primary">تفعيل الاشتراك</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Edit Member Modal -->
+<div class="modal-overlay" id="editMemberModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <span>تعديل بيانات المشترك</span>
+      <button type="button" onclick="closeModal('editMemberModal')" style="background: none; border: none; font-size: 1.2rem; cursor: pointer;">✕</button>
+    </div>
+    <form method="POST" action="{{ url_for('members.edit', member_id=member.id) }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">الاسم الكامل *</label>
+          <input type="text" name="full_name" class="form-control" value="{{ member.full_name }}" required>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+          <div class="form-group">
+            <label class="form-label">رقم الهاتف *</label>
+            <input type="text" name="phone" class="form-control" value="{{ member.phone }}" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">الجنس</label>
+            <select name="gender" class="form-control">
+              <option value="ذكر" {% if member.gender == 'ذكر' %}selected{% endif %}>ذكر</option>
+              <option value="أنثى" {% if member.gender == 'أنثى' %}selected{% endif %}>أنثى</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">تاريخ الميلاد</label>
+          <input type="date" name="birth_date" class="form-control" value="{{ member.birth_date }}">
+        </div>
+        <div class="form-group">
+          <label class="form-label">العنوان</label>
+          <input type="text" name="address" class="form-control" value="{{ member.address }}">
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+          <div class="form-group">
+            <label class="form-label">اسم هاتف الطوارئ</label>
+            <input type="text" name="emergency_contact_name" class="form-control" value="{{ member.emergency_contact_name }}">
+          </div>
+          <div class="form-group">
+            <label class="form-label">رقم هاتف الطوارئ</label>
+            <input type="text" name="emergency_contact_phone" class="form-control" value="{{ member.emergency_contact_phone }}">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">ملاحظات إضافية</label>
+          <textarea name="notes" class="form-control" rows="2">{{ member.notes }}</textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeModal('editMemberModal')">إلغاء</button>
+        <button type="submit" class="btn btn-primary">حفظ التعديلات</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
