@@ -1,42 +1,86 @@
 {% extends "base.html" %}
 
-{% block title %}ملف {{ member.full_name }}{% endblock %}
+{% block title %}ملف البطل: {{ member.full_name }}{% endblock %}
 {% block header_title %}ملف المشترك: {{ member.full_name }}{% endblock %}
 
 {% block content %}
-<div style="display: flex; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap;">
+<div style="display: flex; gap: 0.75rem; margin-bottom: 1.5rem; flex-wrap: wrap;">
   <a href="{{ url_for('members.index') }}" class="btn btn-secondary">← العودة لقائمة المشتركين</a>
-  <button type="button" class="btn btn-primary" onclick="openModal('newSubModal')">➕ إنشاء اشتراك جديد</button>
+  <button type="button" class="btn btn-primary" onclick="openModal('newSubModal')">➕ تفعيل اشتراك جديد</button>
   <button type="button" class="btn btn-secondary" onclick="openModal('editMemberModal')">✏️ تعديل الملف</button>
 </div>
 
 <!-- Member Info Grid -->
-<div style="display: grid; grid-template-columns: 1fr 2fr; gap: 1.25rem;">
-  <!-- Profile Summary Card -->
-  <div class="card">
-    <div style="text-align: center; padding-bottom: 1rem; border-bottom: 1px solid #f1f5f9; margin-bottom: 1rem;">
-      <div style="width: 70px; height: 70px; background: #3b82f6; color: #fff; border-radius: 50%; display: grid; place-items: center; font-size: 1.8rem; font-weight: bold; margin: 0 auto 0.75rem auto;">
-        {{ member.full_name[0] }}
+<div style="display: grid; grid-template-columns: 1fr 2fr; gap: 1.5rem;">
+  
+  <!-- Digital Member Pass & Profile Card -->
+  <div class="space-y-4">
+    <!-- Premium Digital Pass for Bodybuilding Gym -->
+    <div style="background: linear-gradient(135deg, #18181b, #09090b); color: #fff; border-radius: 20px; padding: 1.5rem; position: relative; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.25); border: 1.5px solid #27272a;">
+      <div style="position: absolute; left: -20px; bottom: -20px; width: 120px; height: 120px; background: var(--primary); border-radius: 50%; opacity: 0.25; filter: blur(30px); pointer-events: none;"></div>
+
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
+        <div style="display: flex; align-items: center; gap: 0.5rem;">
+          <span style="font-size: 1.4rem;">🔥</span>
+          <div>
+            <strong style="font-size: 1.05rem; font-weight: 900; letter-spacing: 0.5px; display: block;">IRON GYM PRO</strong>
+            <span style="font-size: 0.65rem; color: #a1a1aa; font-weight: 700;">بطاقة عضوية كمال الأجسام واللياقة</span>
+          </div>
+        </div>
+        <span class="badge" style="background: var(--primary); color: #fff; font-size: 0.72rem;">{{ member.status }}</span>
       </div>
-      <h3 style="margin: 0; font-size: 1.2rem; color: #0f172a;">{{ member.full_name }}</h3>
-      <code style="font-size: 0.85rem; color: #64748b;">{{ member.member_code }}</code>
-      <div style="margin-top: 0.5rem;">
-        <span class="badge badge-success">{{ member.status }}</span>
+
+      <div style="display: flex; align-items: center; gap: 1rem; margin: 1.25rem 0;">
+        <div style="width: 54px; height: 54px; background: #27272a; border: 2px solid #3f3f46; border-radius: 14px; display: grid; place-items: center; font-size: 1.5rem; font-weight: 900; color: #fff;">
+          {{ member.full_name[0] }}
+        </div>
+        <div>
+          <h3 style="margin: 0; font-size: 1.25rem; font-weight: 900; color: #fff;">{{ member.full_name }}</h3>
+          <code style="font-size: 0.82rem; color: #a1a1aa; font-weight: 700;">{{ member.member_code }}</code>
+        </div>
+      </div>
+
+      <div style="display: flex; justify-content: space-between; align-items: flex-end; padding-top: 1rem; border-top: 1px solid #27272a; margin-top: 0.5rem; font-size: 0.8rem;">
+        <div>
+          <span style="display: block; font-size: 0.72rem; color: #71717a; font-weight: 700;">الاشتراك الحالي:</span>
+          <strong style="color: #fafafa; font-weight: 800;">
+            {% if member.active_subscription %}{{ member.active_subscription.plan.name }}{% else %}بدون اشتراك{% endif %}
+          </strong>
+        </div>
+        <div style="text-align: center;">
+          <span style="display: block; font-size: 0.72rem; color: #71717a; font-weight: 700;">المتبقي:</span>
+          <strong style="color: var(--primary); font-size: 0.95rem; font-weight: 900;">
+            {% if member.active_subscription %}{{ member.active_subscription.remaining_days }} يوم{% else %}0{% endif %}
+          </strong>
+        </div>
+        <div style="width: 38px; height: 38px; background: #fff; border-radius: 8px; display: grid; place-items: center; font-weight: 900; color: #000; font-size: 0.75rem;">
+          QR
+        </div>
       </div>
     </div>
 
-    <div style="font-size: 0.88rem; line-height: 1.8;">
-      <div><strong style="color: #64748b;">رقم الهاتف:</strong> {{ member.phone }}</div>
-      <div><strong style="color: #64748b;">الجنس:</strong> {{ member.gender }}</div>
-      <div><strong style="color: #64748b;">تاريخ الميلاد:</strong> {{ member.birth_date or 'غير مسجل' }}</div>
-      <div><strong style="color: #64748b;">العنوان:</strong> {{ member.address }}</div>
-      <div><strong style="color: #64748b;">طوارئ:</strong> {{ member.emergency_contact_name }} ({{ member.emergency_contact_phone }})</div>
-      <div><strong style="color: #64748b;">تاريخ التسجيل:</strong> {{ member.created_at.strftime('%Y-%m-%d') }}</div>
-      {% if member.notes %}
-      <div style="margin-top: 0.5rem; background: #f8fafc; padding: 0.5rem; border-radius: 6px;">
-        <strong style="color: #64748b; display: block;">ملاحظات:</strong> {{ member.notes }}
+    <!-- WhatsApp Share -->
+    <a href="https://wa.me/{{ member.phone|replace('+', '')|replace(' ', '') }}?text={{ ('مرحباً ' ~ member.full_name ~ '، تفضل بطاقة اشتراكك في نادي IRON Gym. كود العضوية: ' ~ member.member_code)|urlencode }}" target="_blank" class="btn btn-secondary w-100" style="width: 100%; justify-content: center; margin-top: 0.5rem; border-color: #22c55e; color: #16a34a;">
+      <span>💬</span> مشاركة بيانات البطاقة عبر WhatsApp
+    </a>
+
+    <!-- Member Details Card -->
+    <div class="card" style="margin-top: 1rem;">
+      <h4 style="margin: 0 0 1rem 0; font-size: 1rem; font-weight: 900; color: var(--text-main);">البيانات الشخصية والاتصال</h4>
+      <div style="font-size: 0.88rem; line-height: 2;">
+        <div><strong style="color: var(--text-caption);">رقم الهاتف:</strong> <span style="font-weight: 700;">{{ member.phone }}</span></div>
+        <div><strong style="color: var(--text-caption);">الجنس:</strong> <span style="font-weight: 700;">{{ member.gender }}</span></div>
+        <div><strong style="color: var(--text-caption);">تاريخ الميلاد:</strong> <span style="font-weight: 700;">{{ member.birth_date or 'غير مسجل' }}</span></div>
+        <div><strong style="color: var(--text-caption);">العنوان:</strong> <span style="font-weight: 700;">{{ member.address }}</span></div>
+        <div><strong style="color: var(--text-caption);">طوارئ:</strong> <span style="font-weight: 700;">{{ member.emergency_contact_name }} ({{ member.emergency_contact_phone }})</span></div>
+        <div><strong style="color: var(--text-caption);">تاريخ الانضمام:</strong> <span style="font-weight: 700;">{{ member.created_at.strftime('%Y-%m-%d') }}</span></div>
+        {% if member.notes %}
+        <div style="margin-top: 0.75rem; background: var(--badge-fire-bg); border: 1px solid var(--badge-fire-border); padding: 0.65rem; border-radius: 8px;">
+          <strong style="color: var(--primary); display: block; font-weight: 800;">ملاحظات التدريب:</strong>
+          <span style="font-weight: 600;">{{ member.notes }}</span>
+        </div>
+        {% endif %}
       </div>
-      {% endif %}
     </div>
   </div>
 
@@ -44,7 +88,7 @@
   <div>
     <!-- Subscriptions List -->
     <div class="card">
-      <h3 style="margin: 0 0 1rem 0; font-size: 1rem; font-weight: 700;">سجل الاشتراكات</h3>
+      <h3 style="margin: 0 0 1.15rem 0; font-size: 1.05rem; font-weight: 900; color: var(--text-main);">سجل الاشتراكات والباقات</h3>
       <div class="table-responsive">
         <table>
           <thead>
@@ -65,7 +109,7 @@
               <td><strong>{{ s.plan.name }}</strong></td>
               <td>{{ s.start_date }}</td>
               <td>{{ s.end_date }}</td>
-              <td>{{ s.price_paid }} ر.ي</td>
+              <td><strong>{{ "{:,.2f}".format(s.price_paid) }} ر.ي</strong></td>
               <td>
                 {% if s.is_active_now %}
                   <span class="badge badge-success">ساري (متبقي {{ s.remaining_days }} يوم)</span>
@@ -87,7 +131,7 @@
             </tr>
             {% else %}
             <tr>
-              <td colspan="7" style="text-align: center; color: #94a3b8; padding: 1.5rem;">لا توجد اشتراكات سابقة لهذا المشترك.</td>
+              <td colspan="7" style="text-align: center; color: var(--text-caption); padding: 1.75rem; font-weight: 700;">لا توجد اشتراكات سابقة لهذا البطل.</td>
             </tr>
             {% endfor %}
           </tbody>
@@ -97,26 +141,28 @@
 
     <!-- Attendance History -->
     <div class="card">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-        <h3 style="margin: 0; font-size: 1rem; font-weight: 700;">سجل الزيارات والحضور ({{ member.attendances|length }})</h3>
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.15rem;">
+        <h3 style="margin: 0; font-size: 1.05rem; font-weight: 900; color: var(--text-main);">
+          سجل الحضور والتمارين الرياضية ({{ member.attendances|length }} زيارة)
+        </h3>
       </div>
       <div class="table-responsive">
         <table>
           <thead>
             <tr>
-              <th>تاريخ ووقت الزيارة</th>
-              <th>ملاحظات</th>
+              <th>تاريخ ووقت الزيارة والتمرين</th>
+              <th>ملاحظات الدخول</th>
             </tr>
           </thead>
           <tbody>
             {% for a in member.attendances %}
             <tr>
-              <td>{{ a.check_in_time.strftime('%Y-%m-%d %H:%M:%S') }}</td>
-              <td>{{ a.note or '-' }}</td>
+              <td><strong style="font-mono">{{ a.check_in_time.strftime('%Y-%m-%d %H:%M:%S') }}</strong></td>
+              <td>{{ a.note or 'تمارين اعتيادية' }}</td>
             </tr>
             {% else %}
             <tr>
-              <td colspan="2" style="text-align: center; color: #94a3b8; padding: 1.5rem;">لم يسجل المشترك أي زيارة بعد.</td>
+              <td colspan="2" style="text-align: center; color: var(--text-caption); padding: 1.75rem; font-weight: 700;">لم يسجل أي حضور للتمارين بعد.</td>
             </tr>
             {% endfor %}
           </tbody>
@@ -130,8 +176,8 @@
 <div class="modal-overlay" id="newSubModal">
   <div class="modal-box">
     <div class="modal-header">
-      <span>إنشاء اشتراك جديد لـ: {{ member.full_name }}</span>
-      <button type="button" onclick="closeModal('newSubModal')" style="background: none; border: none; font-size: 1.2rem; cursor: pointer;">✕</button>
+      <span>تفعيل اشتراك جديد لـ: {{ member.full_name }}</span>
+      <button type="button" onclick="closeModal('newSubModal')" style="background: none; border: none; font-size: 1.3rem; cursor: pointer; color: var(--text-main);">✕</button>
     </div>
     <form method="POST" action="{{ url_for('subscriptions.index') }}">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -146,17 +192,17 @@
           </select>
         </div>
         <div class="form-group">
-          <label class="form-label">تاريخ البدء *</label>
-          <input type="date" name="start_date" class="form-control" value="{{ date_today }}" required>
+          <label class="form-label">تاريخ بدء التمرين *</label>
+          <input type="date" name="start_date" class="form-control" required>
         </div>
         <div class="form-group">
-          <label class="form-label">ملاحظات</label>
+          <label class="form-label">ملاحظات إضافية</label>
           <textarea name="notes" class="form-control" rows="2"></textarea>
         </div>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" onclick="closeModal('newSubModal')">إلغاء</button>
-        <button type="submit" class="btn btn-primary">تفعيل الاشتراك</button>
+        <button type="submit" class="btn btn-primary">تفعيل وتجديد الاشتراك</button>
       </div>
     </form>
   </div>
@@ -167,7 +213,7 @@
   <div class="modal-box">
     <div class="modal-header">
       <span>تعديل بيانات المشترك</span>
-      <button type="button" onclick="closeModal('editMemberModal')" style="background: none; border: none; font-size: 1.2rem; cursor: pointer;">✕</button>
+      <button type="button" onclick="closeModal('editMemberModal')" style="background: none; border: none; font-size: 1.3rem; cursor: pointer; color: var(--text-main);">✕</button>
     </div>
     <form method="POST" action="{{ url_for('members.edit', member_id=member.id) }}">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -208,7 +254,7 @@
           </div>
         </div>
         <div class="form-group">
-          <label class="form-label">ملاحظات إضافية</label>
+          <label class="form-label">ملاحظات التدريب واللياقة</label>
           <textarea name="notes" class="form-control" rows="2">{{ member.notes }}</textarea>
         </div>
       </div>

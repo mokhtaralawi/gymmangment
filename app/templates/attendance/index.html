@@ -1,30 +1,37 @@
 {% extends "base.html" %}
 
-{% block title %}حضور المشتركين{% endblock %}
-{% block header_title %}حضور وزيارات المشتركين{% endblock %}
+{% block title %}بوابة الحضور السريع{% endblock %}
+{% block header_title %}بوابة الحضور والبصمة لصالة الحديد{% endblock %}
 
 {% block content %}
-<div class="card" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
-  <form method="GET" action="{{ url_for('attendance.index') }}" style="display: flex; gap: 0.5rem; flex: 1; max-width: 400px;">
+<div class="card" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; border-right: 5px solid var(--primary);">
+  <form method="GET" action="{{ url_for('attendance.index') }}" style="display: flex; gap: 0.5rem; flex: 1; max-width: 420px;">
     <input type="text" name="q" value="{{ q }}" placeholder="بحث باسم المشترك أو الكود..." class="form-control">
     <button type="submit" class="btn btn-secondary">بحث</button>
   </form>
 
   <button type="button" class="btn btn-primary" onclick="openModal('checkInModal')">
-    ⏱️ تسجيل حضور فوري
+    ⚡ تسجيل دخول لاعب فوري
   </button>
 </div>
 
 <div class="card">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+    <h3 style="margin: 0; font-size: 1.05rem; font-weight: 900; color: var(--text-main);">
+      سجل حركات الحضور اليومية المباشرة
+    </h3>
+    <span class="badge badge-fire">🟢 بوابة الدخول متصلة</span>
+  </div>
+
   <div class="table-responsive">
     <table>
       <thead>
         <tr>
           <th>#</th>
-          <th>اسم المشترك</th>
-          <th>كود المشترك</th>
-          <th>وقت وتسجيل الحضور</th>
-          <th>حالة الاشتراك</th>
+          <th>اسم البطل / المشترك</th>
+          <th>كود العضوية</th>
+          <th>وقت الدخول والتمرين</th>
+          <th>صلاحية الاشتراك</th>
           <th>ملاحظات</th>
         </tr>
       </thead>
@@ -32,9 +39,9 @@
         {% for a in attendances %}
         <tr>
           <td>{{ a.id }}</td>
-          <td><strong><a href="{{ url_for('members.show', member_id=a.member_id) }}" style="color: #2563eb; text-decoration: none;">{{ a.member.full_name }}</a></strong></td>
+          <td><strong><a href="{{ url_for('members.show', member_id=a.member_id) }}" style="color: var(--primary); text-decoration: none;">{{ a.member.full_name }}</a></strong></td>
           <td><code>{{ a.member.member_code }}</code></td>
-          <td>{{ a.check_in_time.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+          <td><strong style="font-mono">{{ a.check_in_time.strftime('%Y-%m-%d %H:%M:%S') }}</strong></td>
           <td>
             {% if a.subscription_id and a.member.active_subscription %}
               <span class="badge badge-success">اشتراك ساري ({{ a.member.active_subscription.plan.name }})</span>
@@ -42,11 +49,11 @@
               <span class="badge badge-warning">بدون اشتراك أو منتهي</span>
             {% endif %}
           </td>
-          <td>{{ a.note or '-' }}</td>
+          <td>{{ a.note or 'تمارين اعتيادية' }}</td>
         </tr>
         {% else %}
         <tr>
-          <td colspan="6" style="text-align: center; color: #94a3b8; padding: 2rem;">لا توجد حركات حضور مسجلة.</td>
+          <td colspan="6" style="text-align: center; color: var(--text-caption); padding: 2.5rem; font-weight: 700;">لا توجد حركات حضور مسجلة اليوم.</td>
         </tr>
         {% endfor %}
       </tbody>
@@ -58,29 +65,29 @@
 <div class="modal-overlay" id="checkInModal">
   <div class="modal-box">
     <div class="modal-header">
-      <span>تسجيل حضور مشترك فوري</span>
-      <button type="button" onclick="closeModal('checkInModal')" style="background: none; border: none; font-size: 1.2rem; cursor: pointer;">✕</button>
+      <span>⚡ تسجيل حضور ودخول مشترك للصالة</span>
+      <button type="button" onclick="closeModal('checkInModal')" style="background: none; border: none; font-size: 1.3rem; cursor: pointer; color: var(--text-main);">✕</button>
     </div>
     <form method="POST" action="{{ url_for('attendance.index') }}">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <div class="modal-body">
         <div class="form-group">
           <label class="form-label">اختر المشترك *</label>
-          <select name="member_id" class="form-control" required style="font-size: 1rem; padding: 0.75rem;">
-            <option value="">-- ابحث أو اختر المشترك --</option>
+          <select name="member_id" class="form-control" required style="font-size: 1rem; padding: 0.85rem;">
+            <option value="">-- ابحث أو حدد اسم المشترك --</option>
             {% for m in members %}
-            <option value="{{ m.id }}">{{ m.full_name }} ({{ m.phone }}) {% if m.active_subscription %}✅ ساري{% else %}⚠️ منتهي{% endif %}</option>
+            <option value="{{ m.id }}">{{ m.full_name }} ({{ m.phone }}) - {% if m.active_subscription %}✅ اشتراك ساري{% else %}⚠️ منتهي{% endif %}</option>
             {% endfor %}
           </select>
         </div>
         <div class="form-group">
-          <label class="form-label">ملاحظات الزيارة</label>
-          <input type="text" name="note" class="form-control" placeholder="اختياري (مثال: دخول بدون بطاقة / ضيف)">
+          <label class="form-label">ملاحظات التمارين / الدخول</label>
+          <input type="text" name="note" class="form-control" placeholder="اختياري (مثال: تمرين أرجل، حصة خاصة، مدرب)">
         </div>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" onclick="closeModal('checkInModal')">إلغاء</button>
-        <button type="submit" class="btn btn-primary">تسجيل الدخول الآن</button>
+        <button type="submit" class="btn btn-primary">تسجيل الدخول والتصريح الآن</button>
       </div>
     </form>
   </div>

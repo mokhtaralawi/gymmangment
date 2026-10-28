@@ -1,62 +1,141 @@
 <!doctype html>
-<html lang="ar" dir="rtl">
+<html lang="ar" dir="rtl" data-theme="light">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>تسجيل الدخول · نادي</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/tokens.css') }}">
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/components.css') }}">
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/app-ui.css') }}">
+  <title>تسجيل الدخول · نادي IRON</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/theme-iron.css') }}">
   <style>
-    body { background-color: #f8fafc; font-family: system-ui, -apple-system, sans-serif; margin: 0; min-height: 100vh; display: grid; place-items: center; }
-    .login-container { display: flex; width: 100%; max-width: 900px; min-height: 520px; background: #fff; border-radius: 20px; overflow: hidden; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.06); border: 1px solid #e2e8f0; margin: 1rem; }
-    .login-hero { flex: 1; background: linear-gradient(135deg, #1e40af, #3b82f6); color: #fff; padding: 3rem 2.5rem; display: flex; flex-direction: column; justify-content: space-between; }
-    .login-hero h1 { font-size: 2rem; margin: 1rem 0; line-height: 1.3; }
-    .login-form-side { flex: 1.1; padding: 3rem 2.5rem; display: flex; flex-direction: column; justify-content: center; }
-    .form-group { margin-bottom: 1.25rem; }
-    .form-group label { display: block; font-weight: 700; font-size: 0.88rem; color: #1e293b; margin-bottom: 0.5rem; }
-    .input-wrapper { position: relative; }
-    .input-wrapper input { width: 100%; padding: 0.75rem 1rem 0.75rem 2.75rem; border: 1.5px solid #cbd5e1; border-radius: 12px; font-size: 0.95rem; box-sizing: border-box; }
-    .input-wrapper input:focus { border-color: #2563eb; outline: none; box-shadow: 0 0 0 3px rgba(37,99,235,0.15); }
-    .btn-login { width: 100%; padding: 0.85rem; background: #2563eb; color: #fff; border: none; border-radius: 12px; font-size: 1rem; font-weight: 700; cursor: pointer; transition: background 0.2s; }
-    .btn-login:hover { background: #1d4ed8; }
-    .alert-box { padding: 0.75rem 1rem; border-radius: 10px; margin-bottom: 1.25rem; font-size: 0.88rem; }
-    .alert-danger { background: #fee2e2; color: #991b1b; }
+    body {
+      background-color: var(--body-bg);
+      color: var(--text-main);
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 1rem;
+    }
+    .login-container {
+      display: flex;
+      width: 100%;
+      max-width: 960px;
+      min-height: 540px;
+      background: var(--card-bg);
+      border-radius: 24px;
+      overflow: hidden;
+      box-shadow: 0 20px 40px -15px rgba(0,0,0,0.15);
+      border: 1.5px solid var(--card-border);
+    }
+    .login-hero {
+      flex: 1;
+      background: linear-gradient(135deg, #ea580c, #c2410c, #9a3412);
+      color: #fff;
+      padding: 3.5rem 2.5rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+    }
+    .login-hero::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at top right, rgba(255,255,255,0.15), transparent 70%);
+      pointer-events: none;
+    }
+    .login-hero h1 {
+      font-size: 2.2rem;
+      font-weight: 900;
+      margin: 1.25rem 0;
+      line-height: 1.3;
+    }
+    .login-form-side {
+      flex: 1.15;
+      padding: 3.5rem 2.5rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      background: var(--card-bg);
+    }
+    .btn-login {
+      width: 100%;
+      padding: 0.95rem;
+      background: var(--primary-gradient);
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      font-size: 1.05rem;
+      font-weight: 900;
+      cursor: pointer;
+      box-shadow: 0 4px 12px var(--primary-glow);
+      transition: all 0.2s ease;
+    }
+    .btn-login:hover {
+      opacity: 0.95;
+      transform: translateY(-1px);
+    }
     @media(max-width: 768px) {
       .login-container { flex-direction: column; }
       .login-hero { display: none; }
-      .login-form-side { padding: 2rem 1.5rem; }
+      .login-form-side { padding: 2.5rem 1.75rem; }
     }
   </style>
+  <script>
+    (function() {
+      const saved = localStorage.getItem('nadi_theme') || 'light';
+      document.documentElement.setAttribute('data-theme', saved);
+    })();
+  </script>
 </head>
 <body>
   <div class="login-container">
+    <!-- Left Hero -->
     <div class="login-hero">
       <div>
-        <div style="font-size: 2rem;">🏋️ <strong>نادي</strong></div>
-        <span style="font-size: 0.9rem; opacity: 0.9;">نظام إدارة النادي الرياضي والشؤون المالية</span>
+        <div style="font-size: 2.2rem; font-weight: 900; display: flex; align-items: center; gap: 0.5rem;">
+          <span>🔥</span> <strong>نادي IRON</strong>
+        </div>
+        <span style="font-size: 0.95rem; opacity: 0.95; font-weight: 700;">منظومة إدارة كمال الأجسام واللياقة والشؤون المالية</span>
       </div>
+
       <div>
-        <span style="font-size: 0.8rem; background: rgba(255,255,255,0.2); padding: 4px 10px; border-radius: 20px;">إدارة يومية احترافية</span>
-        <h1>كل تفاصيل النادي،<br>في مساحة واحدة.</h1>
-        <p style="opacity: 0.9; font-size: 0.95rem; line-height: 1.6;">إدارة منظمة للمشتركين والاشتراكات، الحضور، الحسابات واليوميات، ومسيرات الرواتب ببيانات دقيقة وتصميم انسيابي.</p>
+        <span style="font-size: 0.8rem; background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.2); padding: 5px 12px; border-radius: 20px; font-weight: 800;">
+          إدارة الصالة اليومية باحترافية
+        </span>
+        <h1>بناء الأبطال،<br>والإدارة الذكية في مكان واحد.</h1>
+        <p style="opacity: 0.9; font-size: 0.95rem; line-height: 1.7; font-weight: 600;">
+          متابعة دقيقة للمشتركين واشتراكات الحديد، تسجيل الحضور بالبصمة، القيود المحاسبية وسندات القبض والصرف، ومسيرات رواتب المدربين.
+        </p>
       </div>
-      <div style="font-size: 0.75rem; opacity: 0.8;">
-        الإصدار 0.7.0 · تشغيل محلي
+
+      <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; opacity: 0.85; font-weight: 700;">
+        <span>الإصدار 0.7.0 · تشغيل محلي</span>
+        <span>💪 صالة الأبطال</span>
       </div>
     </div>
 
+    <!-- Right Form -->
     <div class="login-form-side">
-      <div style="margin-bottom: 2rem;">
-        <h2 style="margin: 0 0 0.5rem 0; font-size: 1.5rem; color: #0f172a;">مرحبًا بعودتك 👋</h2>
-        <p style="margin: 0; color: #64748b; font-size: 0.9rem;">سجّل الدخول للمتابعة إلى مساحة العمل.</p>
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+        <div>
+          <h2 style="margin: 0 0 0.4rem 0; font-size: 1.6rem; font-weight: 900; color: var(--text-main);">
+            مرحبًا بك يا كابتن 👋
+          </h2>
+          <p style="margin: 0; color: var(--text-muted); font-size: 0.9rem; font-weight: 600;">
+            سجّل الدخول للمتابعة إلى لوحة تحكم الصالة.
+          </p>
+        </div>
+
+        <!-- Mode Toggle in Login -->
+        <button type="button" class="theme-switch-btn" onclick="toggleTheme()" id="themeBtn" title="التبديل بين الوضع الليلي والنهاري">
+          <span id="themeIcon">🌙</span>
+        </button>
       </div>
 
       {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
           {% for category, message in messages %}
-            <div class="alert-box alert-{{ category }}">{{ message }}</div>
+            <div class="alert alert-{{ category }}">{{ message }}</div>
           {% endfor %}
         {% endif %}
       {% endwith %}
@@ -65,34 +144,46 @@
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
         <div class="form-group">
-          <label for="username">اسم المستخدم</label>
-          <div class="input-wrapper">
-            <input type="text" id="username" name="username" placeholder="أدخل اسم المستخدم" required autofocus>
-          </div>
+          <label class="form-label" for="username">اسم المستخدم</label>
+          <input type="text" id="username" name="username" class="form-control" placeholder="أدخل اسم المستخدم (مثال: 771597106)" required autofocus>
         </div>
 
         <div class="form-group">
-          <label for="password">كلمة المرور</label>
-          <div class="input-wrapper">
-            <input type="password" id="password" name="password" placeholder="أدخل كلمة المرور" required>
-          </div>
+          <label class="form-label" for="password">كلمة المرور</label>
+          <input type="password" id="password" name="password" class="form-control" placeholder="أدخل كلمة المرور" required>
         </div>
 
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; font-size: 0.85rem;">
-          <label style="display: flex; align-items: center; gap: 0.4rem; cursor: pointer; color: #475569;">
-            <input type="checkbox" name="remember_me" value="y" checked>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.75rem; font-size: 0.88rem;">
+          <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; color: var(--text-muted); font-weight: 700;">
+            <input type="checkbox" name="remember_me" value="y" checked style="accent-color: var(--primary);">
             <span>تذكرني على هذا الجهاز</span>
           </label>
-          <span style="color: #94a3b8;">بيانات محمية ومؤمنة</span>
+          <span style="color: var(--text-caption); font-size: 0.8rem; font-weight: 600;">بيانات مشفرة ومؤمنة</span>
         </div>
 
         <button type="submit" class="btn-login">تسجيل الدخول ←</button>
       </form>
 
-      <div style="margin-top: 2rem; padding-top: 1.25rem; border-top: 1px solid #f1f5f9; text-align: center; font-size: 0.75rem; color: #94a3b8;">
-        نظام إدارة النادي الرياضي والشؤون المالية
+      <div style="margin-top: 2.25rem; padding-top: 1.25rem; border-top: 1.5px solid var(--card-border); text-align: center; font-size: 0.8rem; color: var(--text-caption); font-weight: 700;">
+        نظام نادي IRON لإدارة صالات كمال الأجسام واللياقة البدنية
       </div>
     </div>
   </div>
+
+  <script>
+    function updateIcon() {
+      const current = document.documentElement.getAttribute('data-theme') || 'light';
+      const icon = document.getElementById('themeIcon');
+      if (icon) icon.textContent = current === 'dark' ? '☀️' : '🌙';
+    }
+    function toggleTheme() {
+      const current = document.documentElement.getAttribute('data-theme') || 'light';
+      const next = current === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', next);
+      localStorage.setItem('nadi_theme', next);
+      updateIcon();
+    }
+    document.addEventListener('DOMContentLoaded', updateIcon);
+  </script>
 </body>
 </html>
